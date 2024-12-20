@@ -1,0 +1,98 @@
+\subsection{Implementare il dizionario}
+Per l'implementazione abbiamo due possibilita:
+\begin{itemize}
+    \item alberi BST (binario di ricerca): \(O(\text{altezza albero})\)
+    \item albero AVL: \(O(log n)\)
+\end{itemize}
+
+\subsubsection{Albero BST}
+    Ogni nodo ha \(elem(v)\) e \(chiave(v)\), la chiave si trova in un dominio totalmente ordinato
+    e vale che:
+    \begin{itemize}
+        \item nel sottoalbero sinitro di \(v\) le chavi sono \(\leq chiave(v)\)
+        \item nel sottoalbero destro di \(v\) le chavi sono \(\ge chiave(v)\)
+    \end{itemize}
+
+    \begin{definition}{Proprieta del BST}
+
+        Nella foglia piu a sinistra si trova il minimo. Nel nodo piu a destra si trova il massimo.
+    \end{definition}
+
+    \begin{definition}{Visita simmetrica del BST}
+
+        Usando la visita \textbf{simmetrica} su un BST, si guardano i nodi in ordine crescente. 
+    \end{definition}
+    
+    \paragraph{Dimostrazione}
+        Per induzione, con un albero di altezza \(h=1\) e' ovvio. \\
+        Ora per un \(h\) generico, i figli della radice sono alberi di altezza $\leq h-1$.
+        Per ipotesi induttiva questo e' visitato correttamente, allora l'albero di altezza $h$ e' visitato correttamente.
+
+    \begin{definition}{predecessore e successore}
+
+        Il predecessore di un nodo $u$ e' il nodo $v$ con chiave massima $\leq chiave(u)$ \\
+        Il successore di un nodo $u$ e' il nodo $v$ avente minima chiave $\geq chiave(u)$
+    \end{definition}
+
+    \paragraph{Implementare l'operazione delete}
+    Il predecessore di un nodo:
+    \begin{itemize}
+        \item si trova nel sottoalbero sinistro
+        \item se non c'e' un sottoalbero sinistro il predecessore e' un suo antenato
+    \end{itemize}
+
+    \begin{lstlisting}[mathescape=true]
+        algoritmo pred(nodo u) $\to nodo$
+            if($u$ ha figlio sinistro $sin(u)$) then
+                return max($sin(u)$)
+            while ($parent(u) \neq null$ e $u$ e' figlio sinistro di suo padre) do
+                u = parent(u)
+            return $parent(u)$
+    \end{lstlisting}
+
+    Il successore di un nodo $u$ invece e' il minimo nel sottoalbero destro di $u$.
+
+    Per implementare l'operazione \texttt{delete} devo considerare 3 casi:
+    \begin{itemize}
+        \item $u$ e' una foglia
+        \item $u$ ha un solo figlio
+        \item $u$ ha solo due figli
+    \end{itemize}
+
+    Nell'ultimo caso devo sostituire $u$ con il suo predecessore o il suo successore $v$.
+
+    \paragraph{Considerazioni sul costo delle operazioni}
+    Tutte hanno costo $O(h)$, ma al caso peggiore si ha $O(n)$ in caso di
+    alberi profondi e sbilanciati.
+    Un albero e' bilanciato se $h=O(log n)$
+
+\subsubsection{Albero AVL}
+    E' un BST, ma andiamo a considerare il fattore di bilanciamento $\beta(v)$, il cui modulo,  per ogni nodo, deve essere sempre $\leq 1$. 
+    Questo valore si ottiene facendo la differenza delle altezze del sottoalbero sinistro e destro del nodo $v$.
+
+    \paragraph{Altezza di un AVL}
+    Tra tutti gli AVL, quello piu sbilanciato e' l'albero di Fibonacci: e' l'albero AVL di altezza $h$ con
+    il numero minimo di nodi $n_h$.
+
+    \begin{definition}
+        L'altezza di un'albero AVL e' $h=O(log n)$
+    \end{definition}
+    \paragraph{Dimostrazione}
+        Sappiamo che $n_h = F_{h+3}-1= \Theta(\phi^n)$.
+        Quindi $h = Theta(log n_h) = O(log n)$
+    \paragraph{Implementazione del dizionario}
+        Ogni volta che elimino o inserisco un nodo devo mantenere il bilanciamento grazie alle rotazioni, ho 4 casi in base a quale sottoalbero mi sbilancia $v$:
+        \begin{itemize}
+            \item SS: e' il sottoalbero sinistro del figlio sinistro di $v$
+            \item DD: e' il sottoalbero destro del figlio destro di $v$
+            \item SD: e' il sottoalbero destro del figlio sinistro
+            \item DS: e' il sottoalbero sinistro del figlio destro
+        \end{itemize}
+
+        I casi sono simmetrici due a due. \\
+        Il caso SS si risolve con una rotazione a destra con perno $v$.
+        Il caso SD si risolve con una rotazione a sinistra sul figlio sinistro del nodo critico $z$ e l'altra verso destra sul nodo $v$
+
+        L'operazione di rotazione richiede tempo costante.
+
+        Di conseguenza posso implementare: \texttt{insert} e \texttt{delete} in tempo $O(logn)$

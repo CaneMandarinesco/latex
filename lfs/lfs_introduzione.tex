@@ -1,0 +1,135 @@
+\documentclass{article}
+
+\usepackage[italian]{babel}
+\usepackage{listings}
+\usepackage{hyperref}
+
+\title{Introduzione LFS}
+\author{Davide Luci}
+\date{20/12/2024}
+
+
+\lstset{
+    mathescape=false,
+    literate={\$}{{{\$}}}1
+}
+
+
+\begin{document}
+\section{Introduzione}
+    \subsection{Partizionamento}
+    \setlength{\parindent}{0cm}
+        Una partizione da 10GB basta per contenere i file sorgenti e il compilato.
+        Comunque se si vogliono aggiungere funzionalita e' consigliabile avere una partizione da 30GB.
+        E' utile anche attivare una partizione di \texttt{swap}, e con
+        \texttt{free} e' possibile vedere quanta swap e' usata.
+
+        I tool consigliati per partizionare sono: \texttt{cfdisk} e \texttt{fdisk}.
+        La partizione di root dovrebbe essere di circa 20GB. Per i dischi partizionati con GPT
+        il bootloader ha bisogno di una partizione di 1MB, questa su \texttt{fdisk} si chiama \texttt{BIOS Boot}.
+        E' raccomandata l'instsallazione di una partizione dedicata a \texttt{/boot}, dalla grandezza di
+        circa 200MB. 
+
+        Si potrebbe considerare in oltre di creare partizioni per:
+        \begin{itemize}
+            \item \texttt{/home}: Per condividere le configurazioni degli utenti tra piu sistemi.
+            \item \texttt{/usr}. Nella cartella radice, riesederanno \texttt{/bin}, \texttt{/lib}, \texttt{/sbin}, questi sono dei symlink per
+            le omonime cartelle in \texttt{/usr}.
+        \end{itemize}
+
+        Formatteremo le partizioni usando ext4 in questo modo:
+        \noindent
+        \begin{lstlisting}[language=bash]
+            $ mkfs -v -t ext4 /dev/<xxx>
+        \end{lstlisting}
+
+        E' utile impostare la variabile d'ambiente  LFS. Questa contiene il path che porta all punto di mount della radice 
+        del sistema LFS.
+        \begin{lstlisting}[language=bash]
+            $ export LFS=/mnt/lfs
+        \end{lstlisting}
+    \subsection{Montare la partizione}
+        \begin{lstlisting}[language=bash]
+            $ mkdir -pv $LFS
+            $ mount -v -t ext4 /dev/<xxx> $LFS
+        \end{lstlisting}
+
+        Per montare eventualmente altre partizioni:
+        \begin{lstlisting}[language=bash]
+            $ mkdir -v $LFS/home
+            $ mount -v -t ext4 /dev/<yyy> $LFS/home
+        \end{lstlisting}
+    
+\section{Pacchetti e Patch}
+    Bisogna creare la cartella dove risiederanno i pacchetti compressi in tarball, e bisogna eseguire 
+    questi comandi come \texttt{root}.
+    \begin{lstlisting}[language=bash]
+        $ mkdir -v $LFS/sources
+        $ chmod -v a+wt $LFS/sources
+    \end{lstlisting}.
+
+    Per ottenere tutti i pacchetti e le patch useremo \href{https://www.linuxfromscratch.org/lfs/downloads/wget-list-sysv}{wget-list-sysv}
+    come input per il comando:
+    \begin{lstlisting}[language=bash]
+        $ wget --input-file=wget-list-sysv --continue --directory-prefix=$LFS/sources
+    \end{lstlisting}.
+
+    Sarebbe anche una buona cosa verificare le chiavi md5 (sti cazzi).
+
+
+\section{Ultimi passagi per la preparazione.}
+    \subsection{Cartelle!}
+        Come utente root:
+        \begin{lstlisting}[language=bash]
+            # crea le cartelle
+            mkdir -pv $LFS/{etc,var} $LFS/usr/{bin,lib,sbin}
+
+            # fai i link simbolici per bin, lib e sbin
+            for i in bin lib sbin; do
+                ln -sv usr/$i $LFS/$i
+            
+                case $(uname -m) in
+                    x86_64) mkdir -pv $LFS/lib64 ;;
+                esac
+        \end{lstlisting}.
+    \subsection{Utente LFS}
+        Dobbiamo creare il gruppo lfs e il suo utente lfs.
+        \begin{lstlisting}[language=bash]
+            $ groupadd lfs
+            $ useradd -s /bin/bash -g lfs -m -k /dev/null lfs
+        \end{lstlisting}
+
+        Sarebbe anche un'ottima idea impostare una password:
+        \begin{lstlisting}[language=bash]
+            $ passwd lfs
+        \end{lstlisting}
+    \subsection{Set up dell'Ambiente}
+        Dopo aver effettuato l'accesso come \texttt{lfs} (usando il comando \texttt{su})
+        \begin{lstlisting}[language=bash]
+            cat > ~/.bash_profile << "EOF"
+            exec env -i HOME=$HOME TERM=$TERM PS1='\u:\w\$ ' /bin/bash
+            EOF
+        \end{lstlisting}
+
+        La shell bash dopo aver effettuato il login, legge il file \texttt{ .bash_profile} che dovrebbe contenere
+        per lo piu le configurazioni delle variabili d'ambiente.
+
+        Il codice inserito crea una nuova bash dove sono state resettate le principali variabili d'ambiente. 
+        Questa in automatica andra' ad eseguire il file \texttt{.bashrc} che andremo a popolare con:
+
+        \begin{lstlisting}[language=bash]
+            cat > ~/.bashrc << "EOF"
+            set +h
+            umask 022
+            LFS=/mnt/lfs
+            LC_ALL=POSIX
+            LFS_TGT=$(uname -m)-lfs-linux-gnu
+            PATH=/usr/bin
+            if [ ! -L /bin ]; then PATH=/bin:$PATH; fi
+            PATH=$LFS/tools/bin:$PATH
+            CONFIG_SITE=$LFS/usr/share/config.site
+            export LFS LC_ALL LFS_TGT PATH CONFIG_SITE
+            EOF
+        \end{lstlisting}
+
+\end{document}

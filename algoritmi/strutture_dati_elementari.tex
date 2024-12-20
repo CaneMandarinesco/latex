@@ -1,0 +1,159 @@
+\begin{definition}{Tipo di dato}
+        
+    Il \textbf{tipo di dato} definisce una collezione di oggetti, e che tipo di operazioni posso
+    fare su questi.
+\end{definition}
+
+\begin{definition}{Struttura dati}
+
+    La \textbf{struttura dati} e' l'organizzazione dei dati.
+\end{definition}
+
+    \subsection{Il Dizionario}
+        \begin{lstlisting}[escapechar=@]
+            tipo Dizionario: 
+            dati:
+                insieme @\(S\)@ di coppie @\((elem, chiave)\)@ 
+            operazioni:
+                insert(elem e, chiave k).
+                delete(chiave k)
+                search(chiave k) @\( \to \)@ elem
+
+        \end{lstlisting}
+    
+    \subsection{La Pila}
+    \begin{lstlisting}[escapechar=@]
+        tipo Pila: 
+        dati:
+            sequenza @\(S\)@ di @\(n\)@ elementi. 
+        operazioni:
+            isEmpty().
+            push(@\(elem\) \(e\)@)
+                @aggiunge \(e\) come ultimo elemento di \(S\)@
+            pop()
+                @togli e restituisci l'ultimo elemento di \(S\)@
+            top()
+                @restituisci l'ultimo elemento di \(S\) senza toglierlo@
+
+    \end{lstlisting}
+
+    \newpage
+    \subsection{La Coda}
+    \begin{lstlisting}[escapechar=@]
+        tipo Coda: 
+        dati:
+            sequenza @\(S\)@ di @\(n\)@ elementi. 
+        operazioni:
+            isEmpty().
+            enqueue(@\(elem\) \(e\)@)
+                @aggiunge \(e\) come ultimo elemento di \(S\)@
+            dequeue()
+                @togli e restituisci il primo elemento di \(S\)@
+            first()
+                @restituisci il primo elemento di \(S\) senza toglierlo@
+
+    \end{lstlisting}
+
+    \subsection{Tecniche di rappresentazione}
+        Ci sono due tecniche per creare strutture dati:
+        \begin{itemize}
+            \item \textbf{Array} indicizzato.
+            \item \textbf{Record} collegati fra puntatori.
+        \end{itemize} 
+        
+        Un array indicizzato ha le seguenti proprieta:
+        \begin{itemize}
+            \item Prop. \textbf{Forte}: gli indici sono numeri consecutivi.
+            \item Prop. \textbf{Debole}: non posso aggiungere nuove celle.
+            \item \textbf{Contro}: dimensione fissa.
+        \end{itemize}
+
+        Se voglio implementare un dizionario con un array mi conviene usare un array \textbf{sovraddimensionato},
+        che ha spazio per piu di \(n\) elementi. Cosi posso fare l'inserimento in \(O(1)\), 
+        tuttavia \texttt{search} e \texttt{delete} richiedono \(O(n)\) \\
+
+        Oppure posso usare un array \textbf{ordinato}, dove \texttt{search} costa \(O(\log n)\), mentre \texttt{insert} e \texttt{delete}
+        costano \(O(n)\). \\
+
+        La rappresentazione collegata, ovvero una lista, invece ha le seguenti proprieta:
+        \begin{itemize}
+            \item Prop. \textbf{Forte}: posso aggiungere o toglie record in tempo costante.
+            \item Prop. \textbf{Debole}: i record non sono consecutivi.
+            \item \textbf{Contro}: accesso sequenziale
+        \end{itemize}
+
+        Se per implementare il dizionario uso una lista non ordinata, ho che 
+        \texttt{search} e \texttt{delete} impiegano \(O(n)\), mentre \texttt{insert} impiega tempo costante.
+
+        La rappresentazione usando una lista ordinata invece e' sconveniente: mantenere la struttura ordinata
+        aggiunge complessita', e tutte le operazioni richiedono \(O(n)\).
+    
+    \subsection{Alberi}
+        Per rappresentare un'albero si puo' ricorrere ai \textbf{vettori posizionali}, dove ogni cella \(i\) contiene
+        una coppia \((info, parent)\), ossia il suo contenuto \textbf{informativo} e l'indice del \textbf{padre}.
+
+        Oppure si possono usare record collegati da puntatori, per esempio:
+        \begin{itemize}
+            \item Ogni record contiene due puntatori: figlio destro e sinistro. 
+            \item Ogni record ha una lista di puntatori ai figli
+            \item Ogni nodo, nel suo record, punta al primo figlio: \(v\). Nel caso ci siano altri figli, \(v\) punta al fratello successivo.
+        \end{itemize}
+
+    \subsection{Visite di alberi}
+        \subsubsection{DFS}
+        L'algoritmo DFS (Visita in Profondita'), parte dalla radice e procede visitando di figlio in figlio fino alla foglia.
+        Una volta "visitata" la foglia si torna al padre e si controlla se ce ne siano altre, e si visitano. 
+        Altrimenti si risale l'albero e si fa la stessa cosa con i nodi al livello superiore.
+        
+        \begin{lstlisting}[escapechar=@]
+            algoritmo visitaDFS(@\(nodo\) \(r\)@)
+                Pila S
+                S.push(r)
+                while (not S.isEmpty()) do
+                    u = S.pop()
+                    if(@\(u \neq null\)@) then
+                        @visita il nodo u@
+                        S.push(@figlio destro di \(u\)@)
+                        S.push(@figlio sinistro di \(u\)@)
+        \end{lstlisting}
+        
+        L'algoritmo inizia mettendo \(r\) nella radice. Appena
+        entro nel loop, con \texttt{pop()} ottengo la radice, e vado a mettere
+        figlio destro e sinistro nella Pila.
+        All'iterazione successiva, con \texttt{pop()}, ottengo l'ultimo figlio messo con \texttt{push()},
+        ossia il figlio sinistro di \(u\). 
+        
+        \subsubsection{DFS Ricorsivo}
+        Esiste anche una versione ricorsiva, che funziona per alberi binari, ed e' molto interessante.
+        \begin{lstlisting}[escapechar=@]
+            algoritmo visitaDFSRicorsiva(@\(nodo\) \(r\)@)
+                if(@\(r \neq null\)@) then
+                    @visita il nodo \(r\)@
+                    visitaDFSRicorsiva(@figlio sinistro di \(r\)@)
+                    visitaDFSRicorsiva(@figlio destro di \(r\)@)
+        \end{lstlisting}
+
+        scambiando le tre righe dopo l'\texttt{if} posso:
+        \begin{itemize}
+            \item Visitare in preordine (DFS standard)
+            \item Visitare simmetricamente: prima chiamo \texttt{visitaDFSRicorsiva} sul figlio sinistro, poi visito e poi faccio la chiamata sul figlio destro.
+            \item Vistare in postordine: prima chiamo \texttt{visitaDFSRicorsiva} sul figlio sinistro, poi su quello destro e infine visito.
+        \end{itemize}
+        
+        \subsubsection{BFS}
+        Partendo dalla radice, prima di scendere al livello sotto, visito tutti i nodi. Si implementa con 
+        la Coda.
+
+        \begin{lstlisting}[escapechar=@]
+            algoritmo visitaBFS(@\(nodo\) \(r\)@)
+                Coda C
+                C.enqueue(r)
+                while (not C.isEmpty()) do
+                    u = C.dequeue()
+                    if(@\(u \neq null\)@) then
+                        @visita il nodo \(u\)@
+                        C.enqueue(@figlio sintro di \(u\)@)
+                        C.enqueue(@figlio destro di \(u\)@)
+        \end{lstlisting}
+
+        La logica di funzionamento e' simile al DFS.

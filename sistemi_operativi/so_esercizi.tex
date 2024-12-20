@@ -1,0 +1,61 @@
+\documentclass{article}
+
+\usepackage[italian]{babel}
+\usepackage{listings}
+\usepackage{amsmath}
+\usepackage{subfiles}
+
+\title{Riassuntazzo Sistemi Operativi}
+\author{Davide Luci}
+\date{2024}
+
+\newtheorem{definition}{Definition}[section]
+
+\begin{document}
+
+    \maketitle
+    \pagenumbering{gobble}
+    \tableofcontents
+    \newpage
+
+    \pagenumbering{arabic}
+
+    \setlength{\parindent}{0pt}
+    \section{ Prima di leggere...}
+    Questo documento non e' esaustivo al fine di comprendere al pieno la materia trattata.
+    Le definizioni sono scarne, e spesso non esaustive, perche' ho preferito solo appuntare i concetti chiavi
+    da ripassare in modo da trovare una giusta via di mezzo tra studiare e riassumere. Si puo' dire che sia compito del 
+    lettore, quello di arricchire il contenuto di questo documento.
+
+    \newpage
+
+    \section*{ Introduzione}
+    Diocane
+
+    \section { Esercizio Countdown}
+    \begin{lstlisting}[language=c]
+        #include <stdio.h>
+        #include <unistd.h>
+        #include <stdlib.h>
+        #include <time.h>
+
+        int main() {
+            // Inizializza il generatore di numeri casuali
+            srand(time(NULL));
+
+            for (int i = 20; i >= 1; i--) {
+                printf("%d\n", i);
+                fflush(stdout);  // Assicura che l'output venga visualizzato immediatamente
+
+                // Dormi per un tempo casuale tra 0 e 2 secondi
+                sleep(rand() % 3);
+            }
+
+            printf("\nBYE\n");
+            fflush(stdout);
+
+            return 0;
+        }
+    \end{lstlisting}
+    
+    \end{document}
