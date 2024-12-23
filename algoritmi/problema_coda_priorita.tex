@@ -1,0 +1,22 @@
+
+\begin{lstlisting}[mathescape=True]
+tipo CodaPriorita:
+dati:
+    un insieme di $S$ di $n$ elementi con chiavi prese da un campo ordinato
+operazioni
+    findMin() $\to elem$
+    insert($elem e$, $chiave k$)
+        aggiungi a $S$ un nuovo elemento $e$ con chiave $k$
+    delete($elem e$)
+        cancella da $S$ l'elemento $e$
+
+    deleteMin()
+        cancella da $S$ l'elemento con chiave minima
+    
+    increaseKey($elem e$, $chiave d$)
+        incrementa della quantita $d$ la chiave $e$
+    decreaseKey($elem e$, $chiave d$)
+        decrementa della quantita $d$ la chiave $e$
+    merge(CodaPriorita $c_1$, CodaPriorita $c_2$)
+        restituisce una nuova coda: $c_3 = c_1 \cup c_2$
+\end{lstlisting}

@@ -1,0 +1,124 @@
+Negli anni 60, prima di una vera e proprioa memoria virtuale c'era l'overlay,
+la cui implemnetazione era a carico del programmatore. 
+
+Il programma era diviso in \textbf{overlay} ognuno "indipendente" dall'altro: il 
+sistema operativo poteva quindi evitare di caricare tutto il programma in memoria. \\
+
+La memoria virtuale estende il concetto di registro base e limite: ogni programma ha uno spazio degli
+indirizzi diviso in \textbf{pagine}: ossia intervalli continui di memoria, per esempio 4KB.
+
+La memoria virtuale da al processo \textit{l'illusione di avere un spazio di indirizzi ampio}, per esempio a 48 bit
+anche se la RAM non ha fisicamente spazio. La memoria virtuale e' organizzata quindi in pagine che devono essere mappate 
+alle pagine della memoria fisica. \\
+
+\subsection{Tabella delle pagine}
+    Molte delle informazioni riguardanti la paginazione, come per esempio
+    le \textit{associazioni tra pagina virtuale e fisica}, si trovano nella tabella delle pagine: di proprieta del processo (Quindi esiste una tabella per ogni processo).
+    Gli indirizzi della memoria virtuale (usati dal processo) devono essere tradotti in indirizzi per la memoria fisica, questo
+    lo fa la \textbf{MMU}, questa prevede una cache per ridurre i tempi di accesso alla tabella delle pagine (???).
+
+    Se la pagina virtuale richiesta dal processo non e' associata ad una pagina fisica si crea un \textbf{Page Fault} (La RAM e' piena!)
+    e dove capire qualche pagina spostare sul disco
+
+    Un indirizzo virtuale puo' essere costituito per esempio da: 4 bit che indicano la pagina e 12 bit che indicano l'offset.
+    Con questo layout posso gestire 16 pagine dove ognuna ha 4096 byte.
+
+    Ogni voce della tablla ha:
+    \begin{itemize}
+        \item Bit Presente/Assente: la pagina virtuale e' in memoria?
+        \item Bit Protezione: che diritti di accesso ho sulla pagina?
+        \item Bit Supervisor: solo il sistema operativo puo' accedere alla pagina?
+        \item Bit Modificato e Riferimento: la pagina e' stata modificata? e' stato effettuato 
+        un accesso alla pagina?
+    \end{itemize}
+
+    Ora l'accesso alla tabella delle pagine non deve essere un collo di bottiglia, ci sono due tecniche:
+    \begin{itemize}
+        \item Dei registri mantengono i dati per ciascuna pagina virtuale. Ad ogni cambio di contesto devo ricaricare i registri dalla RAM.
+        \item Un solo registro punta all'indirizzo di memoria che contiene tutte le pagine. Accedere ad ogni pagina richiede la lettura della RAM.
+    \end{itemize}
+
+    \subsubsection{TLB}
+        Osservazione: i programmi tendono a fare riferimenti a un piccolo numero di pagine. Introduciamo quindi il \textbf{TLB},
+        un aggieggio hardware che mappa gli indirizzi virtuali e fisici senza dover passare per la RAM, funziona
+        come una vera e propria \textbf{cache}, infatti ha poche voci, dove ognuna contiene: \textit{pagina virtuale, page frame, e altri bit di controllo} come il bit \textbf{valid}
+        L'introduzione di questa e' necessaria dato che senza per ogni richieste di accesso alla memoria, duplicherei le operazioni da fare.
+
+        Dato che questa e' una cache, posso avere dei \textbf{TLB miss}, quindi il sistema operativo deve aggiornare
+        il suo contenuto e rieseguire l'istruzione.
+
+    \subsubsection{Organizzazione della page table}
+        Bisogna trovare il giusto numero di pagine in cui suddividere la memoria, con pagine troppo piccole, per esempio
+        in un'architettura a 32 bit, se ne uso 12 per l'indirizzo e 20 per selezionare la pagina, allora ho $2^20=1.048.576$ pagine e altrettante
+        voci nella tabella delle pagine: \textit{uso almeno 1GB di RAM solo per la tabella.}
+
+        Introduciamo le page table a due livelli. In questo caso le page table sono dei veri e propri cammini navigabili
+        In una macchina a 32-bit potrei avere per esempio: 10 bit che selezionano il primo livello, 10 bit per il secondo, 12 bit per l'indirizzo.
+
+        Cosi facendo non ho bisogno di allocare memoria per le page table non usate, l'uso di una page
+        table monolivello  implica che il sistema debba allocare tutta la memoria richiesta per ogni entry della pagina.
+
+    \subsubsection{TLB miss}
+        I TLB miss sono molto comuni dato che posso tenere poche voci. Posso avere due tipi di miss:
+        \begin{itemize}
+            \item Soft: La pagina e' in memoria ma non nel TBL
+            \item Hard: La pagina non e' in memoria e, quindi nemmeno nel TLB.
+        \end{itemize}
+
+        Se invece faccio un'accesso ad un indirizzo non valido ho un segmentation fault.
+\subsection{Algoritmi di sostituzione delle Pagine}
+    \subsubsection{Algoritmo Ottimale}
+        Rimuovo la pagina che in futuro sara' usata meno volte. Questo algoritmo e' impossibile da implementare.
+    \subsubsection{NRU}
+        Questo algoritmo cerca le pagine che non sono state modificate e accedute di recentemente.
+        Ad ogni ciclo di clock il bit R viene ripulito per identificare le pagine meno usate di recente.
+        NRU non fa altro che elminare le pagine di classe piu bassa: con meno bit M e R accesi.
+    \subsubsection{FIFO}
+        La pagina piu vecchia (la prima ad essere inserita) e' anche la prima candidata ad essere buttata
+        fuori  (la prima ad uscire). Il problema di questa implementazione e' che le pagine piu vecchie potrebbero essere
+        ancora le piu utilizzate.
+    \subsubsection{Second Chance - FIFO}
+        come FIFO ma prima controllo i bit R, se e' uguale a 1 allora prendo la pagina e' la inserisco nella lista (in fondo), 
+        altrimenti la rimuovo.
+        Se tutte le pagine sono state referenziate allora alla fine diventa FIFO puro.
+    \subsubsection{Algoritmo di Clock}
+        Ho una lista a cerchio di pagine, ad ogni tick vado avanti di pagina e controllo il bit R come in FIFO.
+        E' piu efficiente rispetto a FIFO e Second Chance dato che non devo fare operazioni di inserimento sulla lista.
+
+    \subsubsection{LRU}
+        Assumiamo che le pagine meno usate di recente sono le candidate ad essere eliminate.
+        A livello di costo computazionale e' inefficiente: dovrei mantenere una lista di pagine ordinate per utilizzo,
+        per essere efficiente richiede hardware aggiuntivo.
+    
+    \subsubsection{NFU}
+        L'algoritmo NFU e' il migliore, perche' si realizza a livello software molto facilmente:
+        ogni pagina ha un contatore, e ad ogni clock ognuno di questi viene incrementato usando il valore del bit R.
+        Tutta via non e' ancora ottimale: le prime pagine usate dal sistema durante l'avvio avranno un contatore elevato e saranno tenuti
+        quindi in memoria per tantissimo tempo anche se non verranno piu utilizzate
+
+        \paragraph{Aging}
+        Si introduce una tecnica di aging: fisso il numero di bit da usare per ogni contatore, e ad ogni ciclo faccio lo shift verso destra
+        del contatore e poi aggiungo il bit R al lato sinistro.
+        
+    \subsubsection{Working Set}
+        Un Working Set e' l'insieme delle pagine usato da un processo durante una fase dell'esecuzione.
+        All'avvio di un programma si verificano molti page fault.
+        Andiamo a definire iil working set: $w(k,t)$
+        \begin{itemize}
+            \item $w(k,t)$ e' l'insieme di pagine usate negli ultimi $k$ riferimenti all'istante $t$.
+            \item $w(k,t)$ e' monotona non decrescente al crescere di $k$
+            \item Il limite di $w(k,t)$ e' finito, e' correllato allo spazio degli indirizzi del programma.
+        \end{itemize}
+
+        esiste un'ampio valore $k$ per cui il working set non varia, possiamo fare una stima di quali pagine
+        servano ad un processo quando viene riavviato.
+
+        L'algoritmo basato su working set funziona cosi: piuttosto che ragionare per ultimi riferimenti, semprende
+        in esame il tempo di esecuzione, quindi quante pagine sono state usate negli ultimi $\tau$ secondi.
+
+        Un ciclo periodico resetta il bit R, e controllo le pagine: se R=1 vuol dire che la pagina e' nel working set e aggiorno il suo istante di utilizzo
+        , se R=0 e $Eta>\tau$ allora la pagina non e' nel working set e posso rimuoverla altrimenti, la contrassegno come vecchia per possibile rimozione.
+        Se nessuna paggina e' rimuovibile allora seleziono la piu vecchia con R=0.
+
+        Questo algoritmo puo' essere migliorato usando una struttura a cerchio, ad ogni tick controllo se la pagina da schedulare e' puilita
+        se non lo e' sborro,

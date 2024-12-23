@@ -1,0 +1,81 @@
+Quando eseguiamo piu programmi contemporaneamente ci sono 2 problemi principali:
+\begin{itemize}
+    \item Gestire il \textit{sovraccarico di memoria}. Cosa succede quando la occupo tutta?
+    \item Tenere il sistema \textit{stabile e sicuro}. Per sicuro si intende il fatto che un processo non
+    dovrebbe poter accedere ai dati di un'altro programma.
+\end{itemize}
+
+\subsection{Modello Monoprogrammazione}
+Questo metodo puo' essere applicato in 3 modi:
+\begin{itemize}
+    \item SO caricato in RAM, poco usato.
+    \item SO caricato in ROM, usato in sistemi embedded.
+    \item Misto: Sitema Operativo in RAM e i driver in ROM.
+\end{itemize}
+
+Non c'e' nessun tipo di astrazione: prendo il programma, lo butto in memoria e basta.
+Con questo modello nascono dei problemi dal momento in cui gli 
+\textbf{indirizzi assoluti} potrebbero essere interpretati in maniera errata.
+
+
+\subsection{Implementazione con registri di base}
+Questa tecnica sfrutta due registri, che si trovano fisicamente nella cpu:
+\begin{itemize}
+    \item Registro base: contiene l'indirizzo in cui inizia l'area dedicata al programma
+    \item Registro limite: quanta memoria ho allocato?
+\end{itemize}
+
+Questi 2 registri permettono di controllare quando un indirizzo assoluto fa 
+un riferimento oltre la memoria del programma, anche se cio' richiede di effettuare dei
+controlli ogni volta che si fa un riferimento.
+
+\subsection{Sovraccarico Della Memoria}
+Il sovraccarico della memoria si puo gestire con varie tecniche, una di queste e' lo
+\textbf{swapping}: i processi in memoria vengono spostati sulla memoria non volatile, questa tecnica
+richiede molte risorse: la CPU deve scrivere in memoria ROM.
+Un'altra tecnica e' la \textbf{memoria virtuale}: uso il processo anche se parazialmente in RAM.
+Una soluzione drastica e' quella di uccidere il processo.
+
+\subsection{Gestione della Memoria Libera}
+Ogni programma quando viene caricato in memoria e' costituito da:
+\begin{itemize}
+    \item Testo: il vero e proprio programma che deve essere letto ed eseguito
+    \item Dati: porzione di memoria che \textit{cresce in altezza}
+    \item Stack: porzione di memoria che \textit{cresce verso il basso}
+\end{itemize} 
+
+Bisogna dare la dimensione giusta al programma in modo che Stack e Dati possano crescere 
+senza scavalcarsi, altrimenti dovrei riallocarlo di nuovo.
+
+Per tenere traccia delle aree libere di memoria ho due tecniche:
+\begin{itemize}
+    \item \textbf{Bitmap}: un array di bit, ognuno di questi mi dice se una prozione di memoria e' occupata o no
+    \item \textbf{Lista}: ho delle liste collegate, ogni entry mi dice quando una porzione di memoria inizia, quanto e lunga
+    e se e' occupata
+\end{itemize}
+
+Bitmap e Lista sono rispettivamente: rappresentazione sparsa e densa.
+
+\subsection{Algoritmi di allocazione della memoria}
+\begin{itemize}
+    \item First Fit: Trova il primo spazio disponibile
+    \item Next Fit: Scegli il secondo. Prestazioni peggiori rispetto a First Fit
+    \item Best Fit: Tende a frammentare la memoria
+    \item Worst Fit: Prestazioni scadenti
+    \item Quick Fit: Ho delle linked list divise per dimensione, scarsa performence nella coalescenza
+    \item Buddy Allocation: migliora il Quick Fit
+\end{itemize}
+
+\subsubsection{Buddy Memory Allocation e Slab Allocator}
+    La memoria e' un singolo pezzo contiguo. Ad ogni richiesta di allocazione la
+    memoria e' divisa in potenze di 2.
+    I blocchi di memoria contigui vengono uniti. \\
+
+    Questo metodo puo' portare a frammentare inutilmente la memoria: se richiedo 65 pagine
+    l'algoritmo va ad allocarne 128.  
+
+    Per questo si usa anche lo \textbf{Slab Allocator}. Questo lavora sugli slab che possono essere:
+    vuoti, parzialmente pieni o pieni. 
+    Lo Slab Allocator viene usato per strutture di memoria piccole che vengono create e eliminate molto spesso.
+    Una volta che viene allocato uno slab e infine liberato, questo rimane in cache in modo che possa essere riutilizzato
+    per tenere un nuovo dato dello stesso tipo: evito l'overhead dell'inizializzazione. 
