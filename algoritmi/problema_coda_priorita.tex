@@ -8,7 +8,8 @@ operazioni
     insert($elem e$, $chiave k$)
         aggiungi a $S$ un nuovo elemento $e$ con chiave $k$
     delete($elem e$)
-        cancella da $S$ l'elemento $e$
+        cancella da $S$ l'elemento $e$ 
+            nota: ho il riferimento dell'oggetto!
 
     deleteMin()
         cancella da $S$ l'elemento con chiave minima
@@ -20,3 +21,68 @@ operazioni
     merge(CodaPriorita $c_1$, CodaPriorita $c_2$)
         restituisce una nuova coda: $c_3 = c_1 \cup c_2$
 \end{lstlisting}
+
+Ci sono varie implementazioni possibili: 
+\begin{itemize}
+    \item Con array non ordinato:  \texttt{insert} e \texttt{delete} eseguono in $O(1)$, \texttt{FindMin} e \texttt{DeleteMin} eseguono in $\Theta(n)$
+    \item Con array ordinato: \texttt{insert} e \texttt{delete} eseguono in $O(n)$. Per la proprieta dell'ordinamento so trovare e eliminare il minimo in $O(1)$
+    \item Lista non ordinata: tempi uguali all'array non ordinato
+    \item Lista ordinata: tempi uguali all'array ordinato, ma riesco ad eliminare in $O(1)$
+\end{itemize}
+
+\subsection{d-Heap}
+    \begin{lstlisting}[mathescape=true]
+        procedura muoviAlto(v)
+            while($v \neq radice(T)$ and $chiave(v) < chiave(padre(v))$) do
+                svambia di posto $v$ e $padre(v)$ in $T$
+            
+        procedura muoviBasso(v)
+            repeat
+                sia $u$ il figlio di $v$ con chiave mininima
+                if($v$ non ha figlio o $chiave(v) \leq chiave(u)$) break
+                scambia $v$ e $u$ in $T$
+    \end{lstlisting}
+
+    L'operazione \texttt{insert} inserisce una nuova foglia e su questa ripristino la proprita di ordinamento. \\
+
+    L'operazione \texttt{delete} scambia  il nodo $v$ con una foglia qualunque $u$, infine devo ripristinare
+    la proprieta di ordinamento usando \texttt{muoviAlto} o \texttt{muoviBasso} ($O(d log_d n)$).\\
+
+    L'operazione \texttt{decreaseKey} viene eseguita in tempo $O(log_d n)$ dato che devo eseguire solo muoviAlto
+    al caso peggiore, invece \texttt{increaseKey} al caso peggiore esegue in $O(d log_d n)$.
+
+    L'operazione \texttt{merge} puo' essere implementata in due modi: 
+    \begin{itemize}
+        \item Creo una nuova coda da 0
+        \item Ad una delle due aggiungo l'altra. Con $k=min\{ |c_1|, |c_2|\}$, e quindi l'operazione ha costo $O(k log n)$
+        Quand'e' che $k log n = o(n)$? risolvendo l'ugualgianza se: $k = o(n/logn)$, in questo caso conviene applicare questa tecnica.
+    \end{itemize}
+
+\subsection{Heap Binomiali}
+    Nota: l'ordinamento non e' mantenuto orizzontalmente. \\
+
+    \begin{lstlisting}
+        procedura ristruttura()
+            i=0
+            while( esistono ancora due $B_i$) do
+                fondi i due $B_i$ per formare un 
+                albero $B_{i+1}$
+                poni la radice del'albero con chiave
+                minore, come padre dell'altro
+                i+=1
+    \end{lstlisting}
+
+    \texttt{insert} si implementa aggiungendo un albero $B_0$, e applico \texttt{ristruttura},
+    fino a che non si risolve. \\
+
+    \texttt{deleteMin} trova la radice con chiave minima. \\
+
+    \texttt{decreaseKey} aggiorna il valore della chiave e ripristina l'ordinamento. \\
+
+    \texttt{delete} richiama \texttt{decreaseKey} fino a che il nodo non sale alla radice, poi viene eliminato
+    in tempo costante.
+
+    \texttt{merge} unisce $c1$ e $c2$ in un unico albero binomiale: con l'operazione \texttt{ristruttura} comincio
+    a ripristinare la proprieta di unicita.
+
+\subsection{Heap di Fibonacci}

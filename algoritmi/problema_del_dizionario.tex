@@ -79,7 +79,7 @@ Per l'implementazione abbiamo due possibilita:
     \end{definition}
     \paragraph{Dimostrazione}
         Sappiamo che $n_h = F_{h+3}-1= \Theta(\phi^n)$.
-        Quindi $h = Theta(log n_h) = O(log n)$
+        Quindi $h = \Theta(log n_h) = O(log n)$
     \paragraph{Implementazione del dizionario}
         Ogni volta che elimino o inserisco un nodo devo mantenere il bilanciamento grazie alle rotazioni, ho 4 casi in base a quale sottoalbero mi sbilancia $v$:
         \begin{itemize}
@@ -95,4 +95,11 @@ Per l'implementazione abbiamo due possibilita:
 
         L'operazione di rotazione richiede tempo costante.
 
-        Di conseguenza posso implementare: \texttt{insert} e \texttt{delete} in tempo $O(logn)$
+        Di conseguenza posso implementare: \texttt{insert} e \texttt{delete} in tempo $O(logn)$ \\
+
+        Per implementare l'operazione \texttt{insert} una volta inserito il valore, devo ricalcolare i fattori di bilanciamento,
+        e una voltra trovato il nodo critico eseguo un bilanciamento tramite rotazione: \textbf{ne basta uno!} \\
+
+        Per implementare l'operazione \texttt{delete} una volta eliminata la chiave, effettuo il bilanciamento sul nodo critico.
+        Se il bilanciamento cambia l'altezza dell'albero devo controllare se al nodo superiore si e' sbilanciato qualcosa, e cosi via 
+        fino alla radice.
