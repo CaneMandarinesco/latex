@@ -1,0 +1,177 @@
+
+\subsection{Allocazione globale e locale}
+Quando si verifica un page fault ho due scelte:
+\begin{itemize}
+    \item \textbf{Allocazione Locale}: elimino una pagina del processo che ha generato il page fault
+    \item \textbf{Allocazione Globale}: elimino una pagina presa tra tutti i processi in esecuzione
+\end{itemize}
+
+L'allocazione locale e' semplice da implementare ma porta al piu' di frequente al trashing nel caso in 
+cui il working set di un processo sia variabile e cresce piu della memoria allocata.
+
+L'allocazione globale e' piu efficiente perche' si adatta meglio nel caso in cui il working set varia nel tempo ed inoltre:
+\begin{itemize}
+    \item Il sistema operativo puo assegnare dinamicamente i frame ai processi
+    \item I bit di aging non bastano per fare una stima dei cambiamenti sul working set.
+\end{itemize}
+
+\subsection{Allocazione equa e proporzionale}
+Se uso un tipo di \textbf{allocazione equa}, quindi uniforme tra tutti i processi, non posso tenere conto
+delle diverse esigenze dei processi, invece \textbf{l'allocazione proporzionale} rispecchia meglio 
+le necessita di ogni processo. Nota che l'allocazione proprozionale e' possibile solo con l'allocazione globale.
+
+Bisogna assicurarsi che ogni processo abbia \textit{abbastanza pagine per eseguire le \textbf{istruzioni fondamentali}},
+e bisogna prevenire invece le istruzioni che richiedono piu pagine.
+
+\subsection{Allocazione dinamica e PFF}
+Inizialmente ogni processo ha tante pagine in base alla sua grandezza, e aggiorno dinamicamente 
+l'allocazione in base all'evoluzione dell'esecuzione.
+Con \textbf{PFF} monitoro la frequenza dei page fault per ogni processo, e di conseguenza aumento le pagine 
+assegnate ad ogni processo.
+
+osservazione: piu frame ha un processo, meno page fault si generano.
+
+Tuttavia anche implementando il migliore degli algoritmi possible, inevitavilmente se il carico
+e' troppo elevato per la macchina, questa andra in trashing. Che faccio?
+\begin{itemize}
+    \item \textbf{Out Of Memory Killer}: ammazzo i processi piu cattivi (mantengo una specie di punteggio)
+    \item \textbf{Swapping}: sposto i processi in memoria non volatile, evito di uccidere i processi.
+\end{itemize}
+
+\subsection{Scheduling a Due Livelli}
+Nei sistemi interattivi molti processi sono in background e per la maggiorparte del tempo non fanno niente finche
+l'utente non fa qualcosa o si attivano ogni tot secondi: li butto in memoria non volatile.
+Per fare questo devo considerare se: sto considerando un processo CPU bound o IO bound, e qual'e la dimensione e freqiemza dei processi.
+
+Oltre ad applicare lo scheduling a due livelli, posso considerare di compattare o comprimere le pagine da mettere in memoria non volatile. 
+
+\subsection{Policy di Pulizia e Paging Daemon}
+Il \textbf{pagin daemon} e' un processo in background che ogni tanto si sveglia e controlla
+lo stato della memoria. Il paging daemon migliora le performance dell'algoritmo di aging, che performa 
+meglio quando ci sono pagine libere in memoria (\textbf{policy di pulizia}) (altrimenti dovrei sfrattarne una, se questa e' stata modificata dovrei scriverla in memoria,
+aggiornandone i dati, se e' gia presente ed e' pulita allora piscio). 
+
+\subsection{Dimensione delle pagine}
+Devo scegliere la giusta dimensione porcozzio. Pagine piu piccole garantiscono minore frammentazione ma tabelle
+delle pagine piu grandi. La dimensione ottimale si trova bilanciando \textit{frammentazione interna e overhead della tabella
+delle pagine}.
+
+Posso scegliere di sfruttare pagine di grandezze diverse: ad esempio una grandezza maggiore per il kernel.
+
+\subsubsection{Calcolo della dimensione ottimale}
+I dati del problema sono:
+\begin{itemize}
+    \item Dimensione media del processo: $s$ byte.
+    \item Dimensione della pagina: $p$ byte, \textbf{da calcolare!}
+    \item Dimensione di ogni voce nella tabella delle pagine: $e$ byte.
+\end{itemize}
+
+Devo calcolare il mio overhead nella tabella delle pagine:
+\begin{itemize}
+    \item ogni processo ha: $\sim s/p$ pagine.
+    \item la tabella delle pagine occupa quindi: $s \cdot e /p$ byte.
+    \item La memoria sprecata nell'ultima pagina dovuta alla frammentazione e': $p/2$
+\end{itemize}
+
+L'overhead totale e' $s \cdot e /p + p/2$. Derivando rispetto a $p$ e impostando l'uguaglianza a zero
+ottengo che: $p=\sqrt{2se}$ .
+
+\subsection{Spazio indirizzi separato}
+Si puo' scegliere di separare lo spazio degli indirizzi tra il testo del programma e i suoi dati, rispettivamente:
+\textbf{I-space} e \textbf{D-space}
+
+\subsection{Condivisione delle pagine}
+In contesti di multiprogrammazione piu processi vorebbero condividere la stessa pagina, capita spesso che 
+due processi magari leggano lo stesso testo del programma: per facilitare cio' si usa lo spazio degli
+indirizzi separato, cosi possono avere stesso testo ma dati diversi, oppure dati uguali.
+
+Quindi due processi potrebbero condividere lo stesso spazio degli indirizzi per il testo. Ma nel caso di una
+\texttt{fork} sono condivisi anche i dati. Se $A$ modifica una pagina condivisa con $B$, allora 
+il sistema operativo genera un trap, crea una copia della pagina modificata che solo $A$ puo' vedere.
+
+Bisogna fare attenzione a non rimuovere le pagine condivise tra piu processi quando avviene un page fault, senno vaffanculo!
+
+\subsubsection{Librerie Condivise}
+Il sistema operativo condivide automaticamente le pagine di testo usate piu comunemente: ossia le DDL, o shared libs.
+Le librerie per poter funzionare sono compilate usando indirizzi relativi, una volta caricata la libreria in memoria
+aggiungo l'indirizzo base per accedere ad una determinata procedura.
+
+\subsubsection{File Mappati in Memoria}
+Posso mappare un file ad una pagina, o meglio, allo spazio degli indirizzi. Una volta che ho finito di
+leggere e scrivere sul file mappato, posso applicare le modifiche sul file.
+
+\subsection{Problemi di implementazione}
+Il sistema operativo dovrebbe:
+\begin{itemize}
+    \item Determinare le dimennsioni iniziali del programma e dei dati
+    \item Creare la tabella delle pagine
+    \item Allocare spazio per lo swap
+\end{itemize}
+
+ed ogni volta che eseguo un processo devo:
+\begin{itemize}
+    \item Azzerare la MMU e svuotare il TLB.
+    \item Caricare la tabella delle pagine del processo
+    \item Precaricare alcune pagine per evitare page fault.
+\end{itemize}
+
+ed ogni volta che ho un page fault devo:
+\begin{itemize}
+    \item Determinare l'indirizzo che ha causato il fault
+    \item Trovare la pagina nella memoria non volatile
+    \item Scegliere un frame da usare e caricare la pagina nel frame
+\end{itemize}
+
+ed alla chiusura del processo:
+\begin{itemize}
+    \item Rilasciare la tabella delle pagine e le pagine caricate
+    \item Capire quali pagine sono condivise con altri processi.
+\end{itemize}
+
+\subsubsection{Gestione della page fault}
+\begin{enumerate}
+    \item \textbf{Trap nel kernel}: il contatore del programma viene salvato nello stack.
+    \item \textbf{Avvio una routine} per salvare i valori dei registri, e invoco il gestore dei page fault
+    \item \textbf{Trovo la pagina} virutale mancante (nei registri hardware o analizzo il testo del programma)
+    \item \textbf{Controllo} se l'indirizzo richiesto e' valido
+    \item Se non ci sono frame liberi eseguo un \textbf{algoritmo di sostituzione}, se la pagina e' sporca la devo scrivere in memoria non volatile.
+    \item \textbf{Carico} la pagina nel frame
+    \item \textbf{Aggiorno} la tabella delle pagine
+    \item \textbf{Ripristino} lo stato del programma in modo da rieseguire l'istruzione
+    \item \textbf{Schedulo} il processo per l'esecuzione
+    \item Rieseguo!
+\end{enumerate}
+
+\subsection{Bloccare le pagine in memoria durante I/O}
+Per colpa dello scheduler, potrebbe accadere che un processo richieda una pagina andando a sfrattare 
+quella che sta usando un dispositivo di I/O che sta scrivendo usando il DMA. Otterrei dati invalidi, quindi
+devo bloccare o \textbf{"pinnare"} le pagine che sono bloccate da I/O.
+
+\subsection{Gestione dello swap}
+In UNIX le pagine soggette a swap sono inserite in una partizione speciale, con un file system semplificato.
+Oppure potrei avere l'allocazione in memoria di scambio o ad ogni processo associo un'area di scambio (calcolabile tramite offset).
+
+Bisogna tenere pero' conto del fatto che le dimensioni dei programmi in memoria possono crescere: \textit{riservo aree separate per testo, dati e stack}.
+
+\subsection{Segmentation}
+Devo evitare che i programmi si sovrappongano tra di loro per via della crescita. Introduco degli \textit{indirizzi virtual multipli e indipendenti}: \textbf{segmenti}
+Ogni segmento rappresenta uno \textbf{spazio degli indirizzi separato} dagli altri segmenti. 
+Quando faccio un riferimento in memoria ho bisogno del: \textit{numero di segmento e del indirizzo nel segmento}.
+
+La segmentazione facilita la condivisione delle risorse, permette ai programmi di crescere, e permette di applicare delle
+misure di sicurezza.
+
+Un compilatore per gestire tutti i simboli che incontra puo' eseguire in modo efficiente con la segmentazione:
+ogni lista di simboli si trova in un segmento.
+
+Nota:
+\begin{itemize}
+    \item il programmatore deve manipolare direttamente i segmenti
+    \item i segmenti hanno grandezza variabile, le pagine no
+\end{itemize}
+
+Con la segmentazione ho lo stesso problema delle pagine: si frammenta la memoria. \textbf{Checkerboarding} si
+risolve compattando la memoria.
+
+\subsection{multics}
+Ma chi se lo incula multics
