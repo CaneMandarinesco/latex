@@ -1,0 +1,149 @@
+\begin{definition}{Grafo}
+
+    Un \textbf{Grafo} $G=(V,E)$ consiste in un insieme $V$ di nodi
+    e un insieme $E$ di coppie (non ordinate) di vertici: gli \textbf{archi}.
+\end{definition}
+
+\begin{definition}{Grafo diretto}
+
+    Un \textbf{grafo diretto} $D=(V,A)$ e' un insieme di $V$ vertici e $A$ coppie 
+    ordinate di vertici.
+\end{definition} 
+
+Terminologia standard: 
+\begin{itemize}
+    \item $n=|V|$
+    \item $m=|E|$
+    \item $(u,v)$ e' incidente a $u$ e $v$ (ossia gli estremi), se sono adiacenti.
+    \item grado di $G = max_{v \in V}\{\Delta(v)\}$
+\end{itemize}
+
+\begin{definition}{Proprieta' del grado}
+    \begin{itemize}
+        \item $\sum_{v \in V} \Delta(v) = 2m$
+        \item $\sum_{v \in V} \Delta_{out}(v) = \Delta_{in}(v) = m$
+    \end{itemize}
+\end{definition}
+
+\begin{definition}{Grafo Pesato}
+    
+    Un grafo pesato $G=(V,E,w)$, e' un grafo in cui ad ogni arco
+    la funzione $w$ gli associa un valore, di solitoreale.
+\end{definition}
+
+
+\begin{definition} {Albero}
+
+    Un albero e' un grafo conesso ed aciclico
+\end{definition}
+
+\begin{definition}{Numero di archi in un albero.}
+
+    Sia $T=(V,E)$ un'albero, allora $|E|=|V|-1$.
+\end{definition}
+
+\paragraph{Dimostrazione}
+La definizione si dimostra per induzione su $|V|$. Per il caso base $|V|=1$ e' verificato.
+Per il caso induttivo, poiche' $T$ e' connesso ha almeno una foglia e rimuovendola si ottiene un grafo
+connesso e aciclico con $n-1$ nodi che ha $n-2$ archi. Aggiungendola si conclude che $T$ ha $n-1$ archi.
+
+\begin{definition}{Ciclo Euleriano}
+
+    Dato un grafo $G$, un \textbf{ciclo Euleriano} e' un cammino che passa
+    per tutti gli archi di $G$ una ed una sola volta.
+
+    Tale cammino esiste se e solo se tutti i nodi hanno \textbf{grado pari}, tranne due (ossia 
+    gli estremi del cammino).
+\end{definition}
+
+\subsection{Tecniche di rappresentazione}
+
+    Per i grafi non diretti:
+    \begin{itemize}
+        \item \textbf{Matrice di adiacenza}: ogni cella indica se esiste un'arco. $O(n^2)$
+        \item \textbf{Liste di adiacenza}: lista di elementi $v_0,...,v_n$. Una lista di puntatore 
+        descrive con quali nodi e' collegato $v_i$. $O(m+n)$
+    \end{itemize}
+
+    Per i grafi diretti si procede analogamente.
+
+    Con la matrice i costi computazionali sono:
+    \begin{itemize}
+        \item G.N.: Elenco di archi incidenti in $v$: $O(n)$
+        \item G.N.: C'e' l'arco $(u,v)$? $O(1)$
+        \item G.D.: Elenco di archi uscenti da $v$: $O(n)$
+        \item G.D.: C'e' l'arco $(u,v)$? $O(1)$
+    \end{itemize}
+
+    Con le liste i costi computazionali sono:
+    \begin{itemize}
+        \item G.N.: Elenco di archi incidenti in $v$: $O(\Delta(v))$
+        \item G.N.: C'e' l'arco $(u,v)$? $O(min\{\Delta(u), \Delta(v)\})$
+        \item G.D.: Elenco di archi uscenti da $v$: $O(\Delta(v))$
+        \item G.D.: C'e' l'arco $(u,v)$? $O(\Delta(u))$
+    \end{itemize}
+
+\subsection{Scopo e tipi di vista}
+Una visita di $G$ permette di esaminarne i nodi in modo sistematico:
+\begin{itemize}
+    \item BFS: visita in ampiezza
+    \item DFS: visita in profondita
+\end{itemize}
+
+\subsubsection{Visita in ampiezza}
+Dato una grafo $G$ e un nodo $s$ trova tutte le distanze/cammini minimi da 
+$s$ verso ogni altro nodo $v$.
+
+\begin{lstlisting}[mathescape=true]
+    algoritmi visitaBFS(vertice s) $\to$ albero
+        rendi tutti i vertici non marcati
+        T = albero formato da un solo nodo $s$
+        Coda F
+        marca il vertice s; dist(s) = 0
+        F.enqueue(s)
+        while(not F.isempty()) dp
+            u = F.dequeue()
+            for each( arco(u,v) in G) do
+                if($v$ non e' ancora marcato) then
+                    F.enqueue($v$)
+                    marca il vertice $v$; dist(v) = dist(u) + 1
+                    rendi $u$ il padre di $v$ in $T$
+        return T
+\end{lstlisting}
+
+L'algoritmo genera un'\textbf{albero BFS} dove i nodi sono ordinati 
+in base alla distanza dal nodo: $s$.
+
+Il costo dela visista in ampiezza se uso la matrice di adiacenza e' $O(n^2)$,
+invece con le liste di adiacenza:  $O(n+m)$, se il grafo e' \textbf{connesso} allora $m\geq n-1$ e quindi
+$O(n+m)=O(m)$. Sappiamo anche che $m\leq n(n-1)/2$ quindi $O(m+n)=O(n^2)$, per $m=o(n^2)$ l'algoritmo e molto efficiente.
+
+\begin{definition}{Livello e distanza da $v$}
+
+    Per ogni nodo $v$, il suo livello nell'albero BFS e' pari
+    alla distanza di $v$ dalla sorgente $s$.
+\end{definition}
+
+\paragraph{Dimostrazione Informale} 
+    Intuitivamente \dots
+
+\subsubsection{Visita in profondita'}
+e' come esplorare un labirinto usando un gesso e una corda:
+con la \textbf{corda} (nel codice una pila) riesco a tornare indietro se trovo un vicolo cieco,
+con il \textbf{gesso} (nel codice una variabile booleana) segno le strade gia' controllate.
+
+\begin{lstlisting}[mathescape=true]
+    procedura visitaDFSRRicorsiva($vertice v, albero T$)
+        marca e visita il vertice $v$
+        for each( arco(v,w)) do
+            if (w non e' marcati) then  
+                aggiungi l'arco $(v,w)$ all'albero $T$
+                visitaDFSRicorsiva(w,T)
+    algoritmo visitaDFS($vertice s$) $\to albero$
+        T = albero vuoto
+        visitaDFSRicorsiva(s,t)
+        return T
+\end{lstlisting}
+
+La visita \textbf{DFS} genera un'albero $T$ a partire dal vertice $s$,
+la logica e' simile alla \textbf{vista in preordine} gia vista prima.
