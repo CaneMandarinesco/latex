@@ -3,8 +3,9 @@
 \usepackage[italian]{babel}
 \usepackage{listings}
 \usepackage{amsmath}
+\usepackage{amssymb}
 
-\title{Riassuntazzo Calcolo Probabilita'}
+\title{Riassuntazzo Calcolo Probabilita}
 \author{Davide Luci}
 \date{2024}
 
@@ -27,7 +28,312 @@
     lettore, quello di arricchire il contenuto di questo documento.
 
     \newpage
+
+    \section{ Le Basi}
+    \subsection{Probabilita}
+    \begin{definition} Probabilita Condizionata \\
+        $$
+        P(B|A) = \frac{P(A \cap B)}{P(A)}
+        $$
+    \end{definition}
+
+    Dalla \textit{Probabilita Condizionata} si ricava:
+    $$
+    P(A \cap B) = P(B|A) P(A)
+    $$
+
+    \begin{definition} Bayes
+        $$
+        P(A|B) = \frac{P(A) \cdot P(B|A)}{P(B)} = \frac{P(A) \cdot P(B|A)}{\sum_{k=1}^n P(A_k)P(B|A_k)} 
+        $$
+        L'uguaglianza vale se gli $A_k$ sono disgiunti due a due.
+    \end{definition}
+
+    \begin{definition} Eventi Indipendenti
+        $$
+        P(A \cap B) = P(A) + P(B) \to P(B|A) = P(B)
+        $$
+    \end{definition}
+
+    \begin{definition} Schema Successi-Fallimenti
+        $$
+        P(\{\omega\}) = p^k (1-p)^{n-k }
+        $$
+    \end{definition}
+
+    \subsection{Calcolo Combinatorio}
+    \begin{definition} Disposizione \\
+        E' una disposizione di $k$ elementi presi tra $n$.
+        $$|D_k ^n| = \frac{n!}{(n-k)!}$$
+    \end{definition}
+
+    \begin{definition} Combinazione \\
+        Come la \textbf{Disposizione}, ma non conta l'ordine!
+        $$|C_k ^n| = \binom{n}{k} = \frac{n!}{k!(n-k)!}$$
+    \end{definition}
+
+    \begin{definition} Legge Ipergeometrica
+        $$
+        P(A_k) = \frac{\binom{r}{k} \binom{b}{n-k}}{\binom{b+r}{n}}
+        $$
+    \end{definition}
+
+    La \textit{Legge Ipergeometrica} si usa quando ho 2 tipi elementi $r$, $b$ e voglio sapere 
+    la probabilita di pescare esattamente $k$ oggetti di tipo $r$.
+    \newpage
+
+    \begin{definition} Partizioni \\
+        $$ |C_{k1,k2,\dots,k_n}| = \frac{n!}{k_1!k_2! \dots k_n!} $$
+    \end{definition}  
+
+    La formula sopra, si usa per calcolare quante combinazioni di diversi tipi di elementi posso avere.
+
+    \newpage
+    \section{Variabili Aleatorie Discrete}
+    \begin{definition} Legge Binomiale \\
+        $$
+        p(k) = \binom{n}{k}p^k (1-p)^{n-k}
+        $$
+        Ovvero legge binomiale di parametro $p$: $Bin(n,p)$
+    \end{definition}
+
+    La \textit{Legge Binomiale} e' stata gia vista prima. La uso per ottenere la probabilita
+    di avere $k$ successi in $n$ prove. Da notare infatti, l'uso dell \textbf{coefficiente binomiale}.
+
+    \begin{definition} Densita' Geometrica e Geometrica Traslata \\
+        $$
+        p(k) = p(1-p)^k
+        $$
+
+        la traslata invece:
+        $$
+        p(k) = p(1-p)^{k-1}
+        $$
+    \end{definition}
+
+    La \textit{Densita' Geometrica} si usa quando devo calcolare la probabilita di avere $k$ fallimenti
+    prima del 1o successo. Inoltre ha una proprieta' utile:
+
+    \begin{definition} Proprieta di Mancanza di Memoria
+        $$
+        P(X=k+m|X\geq k) = P(X=m)
+        $$
+    \end{definition}
+
+    Intuitivamente, voglio la probabilita di $X=k+m$, probabilita condizionata dal fatto che $X \geq k$. 
+    Ossia, in termini di Densita Geometrica, se so di aver fallito $k$ volte, qual'e' la probabilita che debba 
+    fare altre $m$ prove?
+
+    \begin{definition} Legge di Poisson
+        $$
+        p(k) = e^{-\lambda} \frac{\lambda^k}{k!}
+        $$
+    \end{definition}
+
+    Approssima la \textit{Legge Binomiale} dove ho $n$ grande rispetto a $p$: $B(n,\frac{\lambda}{n})$
+
+    \begin{definition} Distribuzione Ipergeometrica \\
+        Applico direttamente la legge ipergeometrica
+    \end{definition}
+
+    \begin{definition} Binomiale Negativa
+        $$
+        p_x(k) = \binom{k+r-1}{k}p^r(1-p)^k
+        $$
+    \end{definition}
+
+    La \textit{Binomiale Negativa} riguarda la probabilita di avere $k$ fallimenti per ottenere il successo $r$-esimo.
+
+    \begin{definition} Binomaile Negativa Traslata
+        $$
+        p_x(k) = \binom{h-1}{r-1} p^r (1-p)^{h-r}
+        $$
+    \end{definition}
+
+    La \textit {Binomiale Negativa Traslata} riguarda la probabilita di fare $h$ prove prima di arrivare al successo $r$-esimo.
+
+    \begin{definition} Densita Congiunte e merginali\\
+        Sia $X=(X_1, X_2, \dots, X_n)$. p di $X$ e' la \textbf{densita congiunta}, mentre $X_i$ e' la 
+        \textbf{densita marginale}.
+    \end{definition}
+
+    Se le densita' marginali sono indipendenti, allora posso calcolare quella conginuta a partire da queste:
+    $$
+    p_{\underbar X}(x_1, x_2, \dots, x_n) = p_{X_1}(x_1) \dots p_{X_n}({x_n})
+    $$
+
+    \newpage
+    \section { Speranza Matematica, Varianza e Correlazione }
+    Il termine Speranza Matematica e' inteso anche come \textbf{Media} e si puo calcolare in due modi.
     
-    \section{ Capitolo 3: Strutture dati elementari }
-        \input{strutture_dati_elementari.tex}
-        \newpage
+    Se ho una variabile aleatoria del tipo $Y=X^2$, mi conviene calcolarla cosi:
+    $$
+    \mathbb E[Y] = \sum_{x_k \in \mathcal J} f(\underbar{x}_k) p_{\underbar{x}}(\underbar{x}_k)
+    $$
+
+    Se riesco a trovare la densita discreta di $Y$ allora posso calcolarla cosi:
+    $$
+    \mathbb E[X] = \sum_{k=i}^n k \cdot p_y (k)
+    $$
+
+    \subsection{Proprieta della Sperenza}
+    \begin{itemize}
+        \item $\mathbb E[cX] = c \mathbb E[X]$
+        \item $\mathbb E[X+Y] = \mathbb E[X] + \mathbb E[Y]$
+        \item se $P(X \geq Y) = 1$ allora $E[X] \geq E[Y]$. Ma sono uguali se e solo se $P(X=Y)=1$
+        \item se $X, Y$ sono indipendenti, allora: $\mathbb E[X Y] = \mathbb E[X] \mathbb E[Y]$
+    \end{itemize}
+
+    \subsection{Speranza di V.A. discrete}
+    \begin{definition} Bernoulliana
+        $$
+        \mathbb E[x] = p
+        $$
+    \end{definition}
+
+    \begin{definition} Binomiale
+        $$
+        \mathbb E[x] = np
+        $$
+    \end{definition}
+
+    \begin{definition} Ipergeoemntrica
+        $$
+        \mathbb E[x] = n \frac{n_1}{n_1 + n_2}
+        $$
+    \end{definition}
+
+    \begin{definition} Poisson
+        $$
+        \mathbb E[x] = \lambda
+        $$
+    \end{definition}
+
+    \begin{definition} Geometrica
+        $$
+        \mathbb E[x] = \frac 1 p -1
+        $$
+    \end{definition}
+
+    \begin{definition} Geometrica Traslata
+        $$
+        \mathbb E[x] = \frac 1 p
+        $$
+    \end{definition}
+
+    \begin{definition} Binomiale Negativa
+        $$
+        \mathbb E[x] = r (\frac 1 p - 1)
+        $$
+    \end{definition}
+
+    \begin{definition} Binomiale Negativa Traslata
+        $$
+        \mathbb E[x] = \frac r p
+        $$
+    \end{definition}
+
+    \newpage
+    \section{Momento, Varianza e Covarianza}
+    \begin{definition} Momento \\
+        Il momento $k$-esimo di $x$ e': $\mathbb E[x^k]$ 
+    \end{definition}
+
+    \begin{definition} Momento Centrato \\
+        Il momento centrato $k$-esimo di $x$ e': $\mathbb E[(x-E[x])^k]$ 
+    \end{definition}
+
+    \begin{definition} Varianza \\
+        La varianza di $x$ e' il momento centrato di ordine $2$: 
+        $$ Var[x] = \mathbb E[(x-\mathbb E[x])^2]$$
+    \end{definition}
+
+    \begin{definition} Covarianza \\
+        $$
+        Cov(X,Y) = \mathbb E[(X- \mathbb E[X])(Y - \mathbb E[Y])]
+        $$
+    \end{definition}
+
+    \begin{definition} Disuguaglianza di Chebyshev
+        $$
+        \forall a > 0: P(|x-\mathbb E[x]| \geq a) \leq \frac{Var[X]}{a^2}
+        $$
+    \end{definition}
+
+    Proprieta di Varianza e Covarianza:
+    \begin{itemize}
+        \item $Var[X] = \mathbb E[x^2] - (\mathbb E[x])^2$
+        \item $Var[a \cdot X] = a^2 \cdot Var[X]$
+        \item $Var[a+X] = Var[X]$
+        \item $Var[X_1 + X_2] = Var[X_1] + Var[X_2] + 2 Cov(X_2, X_2)$
+        \item $Cov(X,X) = Var(X)$
+        \item $Cov(X_1, X_2) = Cov(X_2, X_1)$
+    \end{itemize}
+
+    \subsection{Varianze di V.A. discrete}
+    \begin{definition} Bernoulliana
+        $$
+        Var[X] = p(1-p)
+        $$
+    \end{definition}
+
+    \begin{definition} Binomiale
+        $$
+        Var[x] = np(1-p)
+        $$
+    \end{definition}
+
+    \begin{definition} Ipergeoemntrica
+        $$
+        Var[x] = n p (1-p) \frac{n_1 + n_2 - n}{n_1 + n_2 - 1}
+        $$
+    \end{definition}
+
+    \begin{definition} Poisson
+        $$
+        Var[x] = \lambda
+        $$
+    \end{definition}
+
+    \begin{definition} Geometrica
+        $$
+        Var[x] = \frac{1-p}{p^2}
+        $$
+    \end{definition}
+
+    \begin{definition} Geometrica Traslata
+        $$
+        Var[x] = \frac{1-p}{p^2}
+        $$
+    \end{definition}
+
+    \begin{definition} Binomiale Negativa e Neg. Traslata
+        $$
+        \mathbb E[x] = r (\frac {1-p} {p^2})
+        $$
+    \end{definition}
+
+    \newpage
+    \section{Correlazione }
+    \begin{definition} Coefficiente di correlazione
+        $$
+        \rho (X_1, X_2) = \frac {Cov(X_1, X_2)} {\sqrt{Var[X_1] \cdot }}
+        $$
+    \end{definition}
+
+    Proprieta':
+    \begin{itemize}
+        \item $|\rho(X_1, X_2)| \leq 1 \to |Cov(X_1, X_2)| \leq \sqrt{Var[X_1]Var[X_2]}$
+        \item $\rho(X_1,X_2) = 1$ se $X_1 = a X_2 + b$
+        \item $\rho(x_1, x_2) = -1$ se $X_2 = a X_1 + b$
+    \end{itemize}
+
+    Per trovare i \textbf{minimi quadrati}, bisogna risolvere il sistema:
+    $$
+    \begin{cases}
+        a = \frac{Cov(X_1, X_2)}{Var[X_1]} \\
+        \mathbb E[X_2] = a \mathbb E[X_1] + b
+    \end{cases}
+    $$
+
+\end{document}
