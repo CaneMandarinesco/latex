@@ -1,0 +1,161 @@
+\subsection{Come memorizzare i file?}
+\begin{definition} File System \\
+    Il file system e' il metodo utilizzato per organizzare e memorizzare dati sui dispositivi di memoria.
+\end{definition}
+
+\begin{definition} Partizioni \\
+    Un disco puo' essere suddiviso in piu' partizioni, ciascuna con un proprio file system, \textbf{indipendente}.    
+\end{definition}
+
+\subsubsection{MBR - Master Boot Record}
+L'MBR si trova nel settore 0 del disco ed e' essenziale per avviare il computer, contiene
+la tabella delle partizioni, dove ogni \texttt{entry} ha informazioni su inizio e fine della partizione.
+
+All'avvio del sistema il \textbf{BIOS} \textit{legge ed esegue l'MBR} che trova la partizione \textbf{attiva}, quella da usare per caricare il \textbf{boot block}
+per avviare il sistema operativo.
+
+\begin{quote}
+    Ogni partizione inizia con un \textbf{boot block} anche se non ce l'ha!
+\end{quote}
+
+\subsubsection{Nuova scuola: UEFI (Unified Extensible Firmware Interface)}
+E' un sistema che sostituisce il vecchio BIOS. Permette:
+\begin{itemize}
+    \item Avvio piu veloce: inizializzazione dell'hardware ottimizato.
+    \item Comptabilita architetture 32 e 64 bit.
+    \item Supporto di Interfaccia utente avanazata e mouse.
+    \item Secure Boot
+\end{itemize}
+
+UEFI funziona con GPT: posso avere dischi piu grandi di \texttt{2,2 TB}.
+\paragraph{GUID Partition Table (GPT)}
+E' un sistema avanza di gestione delle partizione, supporta dischi enormi, 
+puo' gestire un numero illimitato di partizioni (limitato dal sistema operativo che eseguiremo), include un sistema
+di \textbf{backup della tabella delle partizioni} e fa anche il \textbf{CRC}. \\
+
+Nei dischi GPT esiste la \textbf{EFI System Partition} (ESP), una partizione speciale che contiene i file di avvio: bootloader e driver, utilizza
+il file system \textbf{FAT32} in modo da essere compatibile con UEFI. 
+
+\paragraph{Secure Boot}
+Impedisce l'avvio di software non autirizzato: questo software controllare le firme digitali
+del \textit{boot loader, del sistema operativo e dei driver}, in modo da avviare solo software con firme
+autentiche: \textit {previene l'esecuzione di malware e rootkit all'avvio}.
+
+Lo svantaggio e' che alcuni sistemi operativi le cui firme non sono riconosciute potrebbero non avviarsi.
+
+\subsection{Implementazione dei file}
+Bisognia gestire l'associazione tra \textit{file e blocchi sul disco}. Ci sono vari tipi di allocazione 
+per i file.
+
+\subsubsection{Allocazione contigua}
+I file sono memorizzati come sequenze contigue sul disco: \textit{un file da 50 blocchi, occupera 50 blocchi
+consecutivi sul disco}.
+Questo metodo e' semplice da implementare ed ha un'alta efficienza di lettura, con una sola lettura posso leggere il file
+senza dover cambiare posizione durante la lettura (meglio per i dischi meccanici).  \\
+
+Si ha pero' un problema analogo a quello della RAM: come gestisco la frammentazione? Potrebbe essere 
+difficile trovare spazi per infilare i miei file, oppure anche se c'e' abbastanza spazio e' talmente frammentato
+da non avere blocchi continui a disposizione.
+
+\subsection{Allocazione a Liste Concatentate}
+i file sono \textit{liste concatenate di blocchi sul disco}, ogni blocco ha un \textbf{puntatore} al blocco successivo. \\
+
+Permette di usare meglio lo spazio sul disco, posso facilmente implementare la struttura a directory ma:
+\begin{itemize}
+    \item richiede di fare molti accessi casuali (devo chiamare \texttt{seek}).
+    \item parte dei bit nel blocco sono usati per gestire i puntatori, quindi un blocco potrebbe non contenere dati che occupano una \textbf{dimensione standard}, ossia una potenza di 2. 
+\end{itemize} 
+
+\subsection{FAT}
+Uso una File allocation table, caricata in RAM! Questa contiene le sequenze di blocchi che compongono un file.
+E' efficiente ma per dischi troppo grandi si usa troppa RAM, la tabella e' allocata interamente per tutti i blocchi, anche
+quelli inutilizzati, si usa piu che altro per chiavette usb e schede sd di piccole dimensioni.
+
+\subsection{I-NODE}
+\begin{definition} I-NODE
+    Un Index-Node e' una struttura dati fondamentale in \texttt{ext2/ext3/ext4} (usato in Linux). 
+    Contiene le informazioni su un file, \textit{tranne il nome e il contenuto}, ma ne comprende i metadati.
+\end{definition}
+
+Ogni file e directory e' rappresentato da un i-node, questi sono organizzati in una tabella. 
+La tabella FAT rispetto a quella degli i-node non permette di gestire in modo ottimale i meta dati (altrimenti la grandezza della tabella in RAM crescerebbe).
+\textit{I sistemi i-node sono efficienti su dischi grandi}. \\
+
+Un'i-node e' una struttura, di \textbf{dimensione fissa}, che contiene attributi e \textit{gli indirizzi a blocchi} di un file, ad ogni i-node corrisponde un file.
+\textit{Rispetto alla FAT, solo gli i-node dei file aperti si trovano in RAM.} \\
+
+Dato che gli i-node hanno dimensione fissa, per i file che hanno tanti blocchi, l'ultimo indirizzo di un i-node potrebbe
+puntare per esempio ad un \textit{blocco contentente altri puntatori}, posso gestire efficaciemente file grandi. \\
+
+\subsection{Implementazione Delle Directory}
+Le directory mappano i nomi ASCII dei file sulle informazioni per trovare i dati sul disco (primo blocco da leggere o i-node corrispondente).
+
+Come alloco i dati sulla directory? Posso avere un tipo di associazione: \texttt{nome file|attributi} oppure \texttt{nome file|i-node}.
+Ma i nomi dei file hanno lunghezze variaibile, di solito si imposta un limite massimo di caratteri: 255. Ma pochi file usano tutti e 255 
+i caratteri quindi e' saggio usare delle voci con \textbf{lunghezza variabile}:
+\begin{itemize}
+    \item Ogni voce ha un header che dice quanto e' lungo il nome del file. \textit{Ma quando elimino file e cartelle si creano buchi di lunghezza variabile!}
+    \item Il nome dei file e' contenuto in un \textbf{heap}, subito dopo la fine della directory. Cosi ogni entry ha lunghezza fissa.
+\end{itemize}
+
+Ora sorge un'altro problema: la ricerca del file in una directory e' lineare. Usiamo quindi una
+tabella di \texttt{hash}, quindi se ho $n$ file, per ognuno di questi grazie ad una funzione di hash
+sono in grado di accedere in tempo costante alla lista.
+
+Se a piu file corrisponde lo stesso indice dopo che ho applicato l'hasing, uso delle liste concatenate.
+Per velocizzare le cose posso usare una cache che e' efficiente se richiedo un piccolo insieme di file, bisogna
+notare che stiamo \textit{aggiungendo complessita al nostro problema}, magari per directory piccole non serve
+fare tutto sto casino.
+
+\subsection{Link}
+I file possono essere condivisi tra piu utenti tramite:
+\begin{itemize}
+    \item Hard Link: file che puntano \textbf{all'i-node} condiviso.
+    \item Soft Link: file che puntano \textbf{al nome} di un file condiviso.
+\end{itemize}
+
+L'\textbf{Hard Link} e' ideale quando ho molti proprietari, l'i-node viene eliminato quando non ci sono piu'
+Hard Link a questo, indipendentemente dal numero di Hard Link ho comunque un solo i-node.
+L'eliminazione di un i-node si puo' effettuare quando per esempio il contatore di hard link a questo va a 0. \\
+
+Il \textbf{Soft Link} e' piu' rognoso. Per ogni soft link ho un i-node che punta al percorso del file condiviso.
+
+I link introducono un problema: se faccio il backup del disco e trovo i link che devo fa?
+
+\subsection{Spazio del Disco}
+Come tengo traccia dello spazio libero?
+\paragraph{Lista Concatenata}
+Uso una Lista Concatenata di \textbf{blocchi liberi}, le liste si trovano proprio in questi blocchi liberi.
+Questo metodo richiede meno spazio se il disco e' quasi pieno.
+
+\paragraph{Bitmap}
+Uso una bitmap per tracciare i blocchi liberi, quindi un bit per ogni blocco del disco, generalmente
+richiede meno spazio rispetto alla lista concatenata.
+
+\paragraph{Ottimizzazioni sulla lista concatenata}
+Conviene che ciascun blocco ha un \textbf{contatore} che segna i bit liberi, e un numero che rappresenta
+il \textit{blocco a partire dal quale sono liberi}
+
+\paragraph{Free List}
+Uso una lista concatenata di puntatori: "free list". \textit{Mantengo solo un blocco di puntatori in memoria} e uso questo per
+prendere i blocchi da usare.
+
+Per migliorare le performance posso dividere un blocco di puntatori in due e metterlo tra ram e rom. (????)
+
+\subsection{Meccanismo di Quote}
+L'amministratore di sistema assegna a ogni utente un \textbf{massimo} \textit{di file e blocchi da usare}.
+Il sistema operativo deve controllare che le quote siano rispettate:
+\begin{itemize}
+    \item Ho una tabella dei file aperti, ognuno ha un proprietario.
+    \item Una tabella delle quote tiene conto delle statistiche di ogni utente.
+    \item Nella tabella dei file, ad ogni entry corrisponde un puntatore ad una entry nella tabella delle quote.
+\end{itemize}
+Per ogni utente ci sono dei limiti  \textbf{soft} e \textbf{hard} da rispettare.
+
+\subsection{\texttt{ext2}}
+Le componenti  chiave sono:
+\begin{itemize}
+    \item \textbf{Superblocco}: layout della partizione, numero di I-node, e numero di blocchi.
+    \item \textbf{Descrittore del Gruppo}: dettagli su blocchi liberi, I-node
+    \item \textbf{Bitmap}: traccia i  blocchi liberi e gli i-node liberi
+\end{itemize}

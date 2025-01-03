@@ -1,0 +1,189 @@
+Bisogna andare in contro ai problemi della memorizzazione:
+\begin{itemize}
+    \item La RAM ha uno \textbf{spazio limitato}, e le sue informazioni si perdono.
+    \item Devo garantire l'\textbf{accesso concorrente} alle informazioni.
+\end{itemize}
+
+La memorizzazione a lungo termine deve:
+\begin{itemize}
+    \item Gestire tante informazioni.
+    \item Devono persistere sul disco.
+    \item Deve essere condivisa tra processi.
+\end{itemize}
+
+\subsection{File System}
+Un disco e' una sequenza lineare di \textbf{blocchi}: posso scrivere o leggere su \texttt{k}.
+L'astrazione del file risove tutti i problemi elencati sopra, il sistema operativo quando gestisce un file
+si occupa della: \textbf{struttura, denominazione, accesso, protezione e implementazione.}
+
+Un file system ha informazioni visibili all'utente e altre nascoste (come la gestione della memoria e la sua struttura).
+
+\begin{definition} File System \\
+    Un modo per \textbf{organizzare} e memorizzare le informazioni. \\
+    Sono un'astrazione per i dispositivi: Dischi Rigidi, SSD, ecc...
+\end{definition}
+
+\subsection{Nomi dei file}
+I file sono l'astrazione che permettono di salvare e leggere su disco, nascondendo i dettagli tecnici all'utente.
+\begin{itemize}
+    \item \textbf{Nomenclatura dei file}: I file sono identificati tramite nomi (le possibilita dipendono dal file system)
+    \item \textbf{Lunghezza}: a seconda del sistema operativo il nome di un file potrebbe avere una lunghezza massima.
+    \item \texttt{ext4}: non posso usare certi nomi speciali. \texttt{FAT12} non posso usare alcuni caratteri.
+    \item \textbf{Case Sensitive?}
+\end{itemize}
+
+L'estensione di un file puo' essere convenzionale, come per esempio in UNIX. In Windows invece 
+l'estensione specifica quale programma puo' aprire il file.
+
+\subsection{Struttura Di Un File}
+\paragraph{Sequenza Non Strutturata Di Byte}
+In questo caso i file sono una serie di byte senza significato, i programmi utente li devono interpretare: ricade nel caso di 
+\textbf{UNIX, Linux, MacOS e Windows}.
+
+\paragraph{Sequenza di Record di Lunghezza Fissa}
+Il modello storico basato sulle vecchie schede perforate
+
+\paragraph{Fle come Albero di Record}
+Il file e' organizzato come un'albero
+
+\subsection{Tipi di File}
+In Unix e Windows esistono \textbf{File Normali} e \textbf{Directory}, le directory sono file che mantentono
+una gerarchia dei file. \\
+Ci sono due tipi di file \textbf{speciali}:
+\begin{itemize}
+    \item \textbf{file a caratteri}: per gestire dispositivi \textit{I/O}.
+    \item \textbf{file speciali a blocchi}: per gestire i \textit{dischi}.
+\end{itemize}
+
+I File Normali possono essere interpretati come:
+\begin{itemize}
+    \item \textbf{ASCII}: file di testo.
+    \item \textbf{Binari}: non leggibili come testo, vanno interpretati dai programmi.
+\end{itemize}
+
+\paragraph{File Eseguibilie}
+Un file eseguibile e' una sequenza di byte ben strutturata, le sue \textbf{componenti} sono:
+\begin{itemize}
+    \item \textbf{Numero Magico}: il file e' eseguibile?
+    \item \textbf{Intestazione/Header}: Punto di ingresso, dimensioni di ogni componente del file.
+    \item \textbf{Testo e Dati}: Le parti del programma da caricare in memoria
+    \item \textbf{Tabella dei simboli}: usata per il debug.
+\end{itemize}
+
+\paragraph{Archivio}
+Sono file binari (interpretati come testo non avrebbero senso), che raccolgono procedure di libreria compilate
+che devono essere collegate.
+
+\paragraph{Accesso ai file}
+L'accesso per via dell'hardware era \textbf{sequenziale} (si leggevano dei nastri magnetici).
+Con l'avvento dei dischi si poteva leggere con \textbf{accesso casuale}.
+
+Per leggere posso indicare una posizione specifica, dove inzia la lettura oppure con \texttt{seek}
+posso impostare la posizione nel file corrente che sto leggendo: implementato sia un Unix che Windows.
+
+\paragraph{Attributi comuni dei file.}
+\begin{itemize}
+    \item \textbf{Protezione e Accesso}: chi puo accedere al file? Posso leggere, scrivere e eseguire?
+    \item Flag di controllo: sola lettura, nascosto, file di backup.
+    \item Binario o ASCII?
+    \item Attributi Temporali: Data e Ora, Ultimo accesso, Ultima modifica
+    \item Dimensione.
+\end{itemize}
+
+\subsection{Programmazione!}
+\subsubsection{Leggere un file}
+\begin{lstlisting}[language=c]
+    int fd = open("foo.txt", O_RDONLY);
+    char buf[512];
+    ssize_t bytes_read = read(fd, buf, 512);
+    close(fd);
+    printf("read %zd: %s\n", bytes_read, buf);
+\end{lstlisting}
+
+\subsubsection{\texttt{lseek}}
+\begin{lstlisting}[language=c]
+    int fd = open("foo.txt", O_RDONLY);
+    lseek(fd, 128, SEEK_CUR);
+    char buf[8];
+    read(fd, buf, 8);
+    close(fd);
+\end{lstlisting}
+
+Sposta di 128 byte in avanti la posizione nel file, a partire dalla posizione corrente.
+
+\subsubsection{Scrivere}
+
+\begin{lstlisting}[language=c]
+    int fd = open("foot.txt", O_WRONLY |
+         O_CREAT | O_TRUNC);
+    char buf[] = "Dio Porco!";
+    write(fd, buf, strlen(buf));
+    close(fd);
+\end{lstlisting}
+
+La flag \lstinline{O_TRUNC} indica che se il file esiste lo ridimensiono a 0. 
+
+\subsection{Directory}
+\begin{definition} Directory \\
+Sono file che tengono traccia degli altri file nel file system. 
+\end{definition}
+
+In generale una singola directory, denominata \texttt{root}, contiene tutti gli altri file: organizzazione a \textbf{Singolo Livello}.
+L'organizzazione in directory offre semplicita e rapidita nella locazione di un file. 
+
+E' da notare che l'uso dei file come astrazione e' ampiamente utilizzata: dispostivi embedded come fotocamere e lettori mp3, e tecnologie \textbf{RFID}.
+L'idea dei file e' antica, ma si rinnova ad ogni generazione.
+
+L'organizzazione a singolo livello non e' pratica per noi umani che teniamo vogliamo tenere in memoria
+migliaia di file: si introduce una struttura ad albero per organizzare logicamente i file.
+
+Di solito ogni utente ha una sua cartella privata per i suoi dati.
+
+I percorsi che portano ad un file possono essere:
+\begin{itemize}
+    \item \textbf{Assoluti}: utile per caricare le procedure di libreria
+    \item \textbf{Relativi}: e' legata alla \textbf{directory di lavoro}
+\end{itemize}
+
+Le operazioni possibili su una directory sono:
+\begin{itemize}
+    \item \texttt{create}: crea una directory vuota.
+    \item \texttt{delete}: elimina la directory solo se e' vuota.
+    \item \texttt{opendir}: apri e leggi il contenuto.
+    \item \texttt{closedir}: chiudila e libera le risorse.
+\end{itemize}
+
+L'istruzione \texttt{readdir}, restituisce le prossima voce in una directory aperta.
+
+\subsection{Archiviazione}
+I file TAR (Tape Archive) servono per raccogliore piu file in un unico archivio, mantenendone la struttura
+e i permessi originali. 
+
+Di solito, dopo aver archiviato dei file, si comprimono con \texttt{gz}: il suo spazio viene ridotto.
+
+\begin{lstlisting}[language=bash]
+    tar -czvf nome-archivio.tar.gz /percorso/della/cartella
+\end{lstlisting}
+Dove:
+\begin{itemize}
+    \item \texttt{c}: crea un nuovo archivio
+    \item \texttt{z}: comprimi usando l'algoritmo gzip
+    \item \texttt{v}: verbose
+    \item \texttt{f}: specifica il nome del file di archivio
+\end{itemize}
+
+Per "aprire" un archivio tar compresso con gzip, invece:
+\begin{lstlisting}[language=bash]
+    tar -xzvf nome-archivio.tar.gz
+\end{lstlisting}
+Simile a prima, l'opzione \texttt{x} indica che voglio estrarre. 
+
+Altri comandi e formati per comprimere e creare archivi:
+\begin{itemize}
+    \item \texttt{zip}: riduce la dimensione dei file singolarmente e poi li archvia, e' ampiamente supportato.
+    \item \texttt{unzip}: decomprime e estrare gli archivi \texttt{zip}
+    \item \texttt{tar.gz}: raccoglie i file in un unico archivio e lo comprime. La compressione e' elevata, ed e' in grado di mantenere la sua struttura e i permessi
+\end{itemize}
+
+In conlusione \texttt{tar.gz} ha un tasso di compressione piu elevato rispetto a \texttt{zip}, ma quest'ultimo e' piu veloce nel crearli.
+Tutta via \texttt{tar.gz} mantiene i meta dati dei file, mentre \texttt{zip} e' supportato su diverse piattaforme.
