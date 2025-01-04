@@ -1,0 +1,64 @@
+Con $G=(V,E,w)$ un grafo orientato o non, il  costo della lunghezza del cammino
+$\pi = <v_0, v_1, \dots, v_k>$ e' $w(\pi) = \sum_{i=1}^k w(v_{i-1}, v_i)$.
+
+Identifichiamo con $d_G(u,v)$ il costo del cammino minimo da $u$ a $v$, e puo' essere:
+\begin{itemize}
+    \item $d(u,v)=+\infty$ se non c'e' un cammino da $u$ a $v$
+    \item $d(u,v)=-\infty$ se c'e' un ciclo con \textbf{costo negativo}
+\end{itemize}
+
+\begin{definition} Sottocammini di un cammino minimo \\
+    Ogni sottocammino di un cammino minimo e' un cammino minimo.
+\end{definition}
+
+Si dimostra con \textbf{cut\&paste}. se $x$ e $y$ sono nel "cammino minimo" da $u$ a $v$ ma 
+per la coppia $(x,y)$ esiste un'altro cammino minimo diverso dai nodi in $u$, $v$ allora il
+cammino minimo da $u$ a $v$ e' diverso.
+
+Vogliamo risolvere due problemi: 
+\begin{itemize}
+    \item Dato $G=(V,E,w)$, con $s \in V$, voglio calcolare le distanze di tutti i nodi da $s$. ossia tutti i $d_G(s,v)$.
+    \item Dato $G=(V,E,w)$, con $s \in V$, voglio l'albero dei cammini minimi di $G$ radicato in $s$.
+\end{itemize}
+
+In teoria risolvere un problema vuol dire risolvere anche l'altro.
+
+\subsection{Albero dei cammini minimi: SPT}
+L'albero dei cammini di un grafo $G$ e' tale se per ogni $v \in V$ vale che $d_T(s,v)=d_G(s,v)$.
+In oltre, per i grafi non pesati, e' vero che: \textit{l'albero SPT radicato in s e' uguale all'albero BFS radicato in s}.
+
+Per trovare i cammini minimi si usa Dijkstra.
+\subsection{Dijkstra}
+\begin{enumerate}
+    \item Mantengo per ogni nodo una \textbf{stima per eccesso} della distanza: $D_{sv}$
+    \item Mantengo un insieme $X$ di nodi le cui stime sono \textbf{esatte}. Mantengo anche un'albero $T$
+    che contiene i cammini minimi verso i nodi in $X$. Inizialmente: $X=\{s\}$, $T$ non ha archi.
+    \item ad ogni passo aggiungo a $X$ un nodo $u$ con stima minima e aggiungo quell'arco a $T$.
+    \item aggiorno le stime guardando i nodi adiacenti a $u$.
+\end{enumerate}
+
+la stima di un nodo $y$ e' $D_{sy} = min\{D_{sx} + w(x,y) : (x,y) \in E, x \in X\}$. 
+E' una stima, perche' se poi troviamo un arco $(u,y)$ tale che: $D_{su} + w(u,y) < D_{sx} + w(x,y)$ allora
+rimpiazziamo $(x,y)$ con $(u,y)$.
+
+\textit{Le stime dei nodi si tengono in una coda con priorita.}
+
+\begin{lstlisting}[mathescape=true]
+    algoritmo Dijkstra($grafo$ $G$, $vertice$ $s$) $\to albero$
+        for each(vertice $u$ in $G$) do $D_{su}$ = $+\infty$
+        $\hat T$ = albero formato dal nodo $s$; $X=\emptyset$
+        CodaPriorita S
+        $D_{ss} = 0$
+        while(not S.isEmpty()) do
+            u = S.deleteMin(); $X=X \cap \{u\}$;
+            for each( $arco(u,v)$ in $G$) do
+                if($D_{sv} = +infty$) then
+                    S.insert(v, $D_{su}$ + w(u,v))
+                    $D_{sv} = D_{su} + w(u,v)$
+                    rendi $u$ padre di $v$ in $\hat T$
+                else if($D_{su} + w(u,v) < D_{sv}$) then
+                    S.decreaseKey(v, $D_{sv} - D_{su} - w(u,v)$)
+                    $D_{sv} = D_{su} + w(u,v)$
+                    rendi $u$ nuovo padre di $v$ in $\hat T$
+        return $\hat T$
+\end{lstlisting}
