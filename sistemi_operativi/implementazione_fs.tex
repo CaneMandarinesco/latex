@@ -125,8 +125,9 @@ I link introducono un problema: se faccio il backup del disco e trovo i link che
 \subsection{Spazio del Disco}
 Come tengo traccia dello spazio libero?
 \paragraph{Lista Concatenata}
-Uso una Lista Concatenata di \textbf{blocchi liberi}, le liste si trovano proprio in questi blocchi liberi.
-Questo metodo richiede meno spazio se il disco e' quasi pieno.
+Uso una Lista Concatenata di blocchi, questi contengono gli indirizzi dei blocchi liberi.
+In caso un blocco non basti a referenziare tutti i blocchi liberi, questo punta ad un altro blocco contenente
+altri blocchi liberi.
 
 \paragraph{Bitmap}
 Uso una bitmap per tracciare i blocchi liberi, quindi un bit per ogni blocco del disco, generalmente

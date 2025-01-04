@@ -47,7 +47,7 @@ Oltre ad applicare lo scheduling a due livelli, posso considerare di compattare 
 
 \subsection{Policy di Pulizia e Paging Daemon}
 Il \textbf{pagin daemon} e' un processo in background che ogni tanto si sveglia e controlla
-lo stato della memoria. Il paging daemon migliora le performance dell'algoritmo di aging, che performa 
+lo stato della memoria. Il paging daemon migliora \textit{le performance dell'algoritmo di aging}, che performa 
 meglio quando ci sono pagine libere in memoria (\textbf{policy di pulizia}) (altrimenti dovrei sfrattarne una, se questa e' stata modificata dovrei scriverla in memoria,
 aggiornandone i dati, se e' gia presente ed e' pulita allora piscio). 
 
@@ -173,5 +173,18 @@ Nota:
 Con la segmentazione ho lo stesso problema delle pagine: si frammenta la memoria. \textbf{Checkerboarding} si
 risolve compattando la memoria.
 
-\subsection{multics}
-Ma chi se lo incula multics
+\subsection{multics: segmentazione con paginazione}
+In multics esiste una tabella dei segmenti (che essendo molto grande, viene segmentata e paginata),
+in questa descrittore di segmento, ha un puntatore alla tabella delle pagine del segmento.
+
+L'indirizzo in un segmento e' costituito da: numero di segmento e indirizzo nel segmento, a suo volta diviso
+in pagina e parola nella pagina.
+
+Ogni volta che richiedo un indirizzo devo controllare:
+\begin{itemize}
+    \item se il segmento ha almeno una pagina caricata in memoria: altrimenti ho segmentation fault
+    \item se ho violazioni di accesso allora viene generata una trap
+    \item se la pagina richiesta non e' in memoria genero un page fault
+\end{itemize}
+
+Questo algoritmo per essere efficiente usa hardware aggiuntivo.
