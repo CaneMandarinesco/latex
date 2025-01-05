@@ -49,6 +49,7 @@ rimpiazziamo $(x,y)$ con $(u,y)$.
         $\hat T$ = albero formato dal nodo $s$; $X=\emptyset$
         CodaPriorita S
         $D_{ss} = 0$
+        S.insert(s,0)
         while(not S.isEmpty()) do
             u = S.deleteMin(); $X=X \cap \{u\}$;
             for each( $arco(u,v)$ in $G$) do
@@ -62,3 +63,16 @@ rimpiazziamo $(x,y)$ con $(u,y)$.
                     rendi $u$ nuovo padre di $v$ in $\hat T$
         return $\hat T$
 \end{lstlisting}
+
+\begin{definition} Lemma \\
+    Quando il nodo $v$ viene estratto dalla coda con priorita' vale che:
+    \begin{itemize}
+        \item $D_{sv} = d(s,v)$
+        \item Il cammino da $s$ a $v$ nell'albero corrente ha costo $d(s,v)$
+    \end{itemize}
+\end{definition}
+
+se ci fosse un nodo $y$ con $d(s,y)$ con costo minore, questo sarebbe nella coda delle priorita' 
+e sarebbe gia stato estratto.
+
+L'algoritmo esegue in tempo $O(m+nlogn)$

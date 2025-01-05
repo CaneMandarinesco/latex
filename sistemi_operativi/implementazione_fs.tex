@@ -154,9 +154,198 @@ Il sistema operativo deve controllare che le quote siano rispettate:
 Per ogni utente ci sono dei limiti  \textbf{soft} e \textbf{hard} da rispettare.
 
 \subsection{\texttt{ext2}}
-Le componenti  chiave sono:
+Le componenti  chiave sono di un gruppo di blocchi sono:
 \begin{itemize}
-    \item \textbf{Superblocco}: layout della partizione, numero di I-node, e numero di blocchi.
-    \item \textbf{Descrittore del Gruppo}: dettagli su blocchi liberi, I-node
+    \item \textbf{Superblocco}: informazioni sul layout, numero di I-node, e numero di blocchi. Contiene gli \textbf{indirizzi delle bit map} per lo spazio libero: per gli inode e per i blocchi.
+    \item \textbf{Descrittore del Gruppo}: dettagli su blocchi liberi, I-node, quante directory ci sono nel gruppo.
     \item \textbf{Bitmap}: traccia i  blocchi liberi e gli i-node liberi
+\end{itemize}
+
+Ogni volta che viene creato un nuovo file, ext2 riserva per questo 8 blocchi aggiuntivi inmette a disposizione caso
+di scritture future, per cercare di limitare la frammentazione.
+
+Per cercare aree libere in modo efficiente viene utilzzata una bitmap, inoltre il ext2 cerca di posizionare i file
+nella stessa cartella nello stesso blocco a cui appartiene la directory genitore.
+
+L'\textbf{accesso} ai file tramite percorso e' ottimizzato grazie ad una \textbf{cache} che mantiene le 
+directory a cui ho fatto accesso di recente. Quando accedo devo accedere ad un file devo navigare tutti gli 
+inode delle directory che compongono il percorso, fino a che non trovo l'inode del file.
+
+\subsection{Migliorare le performance}
+Posso usare una \textbf{cache}, per tenere i blocchi piu' usati. Semplicemente, quando devo leggere un blocco
+lo porto in RAM, in modo da poterlo leggere da li per delle letture future.
+Posso applicare l'algoritmo LRU in modo efficiente quando lavoro con i blocchi, ma non e' ottimale. \textit{In caso di crash improvviso
+i dati modificati in RAM non sono stati scritti sul disco}.
+Infatti ci sono tipi di file che sono considerati critici e che il sistema operativo scrive spesso sul disco, alternativamente un programma
+utente puo' \textbf{forzare} la scrittura di un file sul disco con la chiamata \texttt{sync}. Grazie all'\textbf{hasing} posso migliorare il tempo di
+ricerca nella cache. \\
+
+Il comando \texttt{free} infatti ha una colonna \texttt{cache}, questa mostra quanta RAM e' riservata per i blocchi
+mantenuti in memoria.
+
+Esiste in'oltre la \textbf{page cache}, che memorizza le pagine del filesystem virtuale in RAM, prima di 
+passare al driver del dispositivo.
+
+\subsection{Deframmentazione}
+Col tempo i dischi tendono a frammentarsi: i blocchi di uno stesso file si sparpagliano su tutto il disco.
+L'operzione di deframmentazione, cerca di compattare i file, in modo da migliorare le performance su dischi meccanici.
+
+L'utility \texttt{defrag} di windows serve proprio a questo, ma e' sconsigliato su dischi SSD in quanto eseguo operazioni
+di scrittura inutili che non fanno altro che diminuire il tempo di vita del disco.
+
+\subsection{Ottimizzazione dello spazio}
+Attraverso l'uso di vari algoritmi si possono ridurre sequenze di dati ripetuti: file system come NTFS (Windows), Btrfs e ZFS 
+comprimono automaticamente i dati.
+
+E' possibile anche osservare quali sono i file duplicati, in modo da mantenerne solo una copia. Posso mantenere 
+le copie a blocchi o per porzioni di file.
+
+\subsection{Affidabilita: Backup}
+Ci sono vari eventi che minacciano l'affidabilita del disco:
+\begin{itemize}
+    \item Dei \textbf{Blocchi Danneggiati}: settori che sono illeggibili.
+    \item \textbf{Errori sull'intero disco}: dovuti a errori hardware.
+    \item \textbf{Scritture inconsistenti} dovute a tensioni irregolari o interruzioni di energia.
+    \item \textbf{Errori Umani}: cancello per sbaglio qualcosa 
+    \item \textbf{Smarrimento} del computer, me lo rubano.
+    \item \textbf{Malware e Ransomware}: virus e software dannosi che criptano o danneggiano i file.
+\end{itemize}
+
+Conviene quindi fare backup del disco nel caso qualcuno sia coglione o che succeda un disastro fisico (terremoti, incendi, blackout).
+Ci sono due modi per fare backup:
+\begin{itemize}
+    \item \textbf{Completo}: faccio una copia totale di tutti i dati, su base settimanale o mensile di solito.
+    \item \textbf{Incrementale}: copio solo le porzioni di file modificati, o file interi aggiunti rispetto all'ultimo backup.
+\end{itemize}
+
+E ci sono due tipi di backup:
+\begin{itemize}
+    \item \textbf{Backup Fisico}: Copio tutti i blocchi, da 0 fino all'ultimo.
+    \item \textbf{Backup Logico}: Copio file e directory specifiche, ignoro file di sistema e blocchi danneggiati.
+\end{itemize}
+
+Su un backup posso considerare di farne la \textbf{compressione} (sconsigliato perche' puo' essere soggetta ad errori). \\
+Una tecnica prevede di fare lo \textbf{snapshot} del sistema per garantirne la coerenza del backup in caso di un sistema in uso. \\
+
+\subsubsection{Backup Fisico}
+Quando viene fatto un backup fisico e ne copio i dati devo evitare di leggere i blocchi danneggiati: altrimenti ho degli errori in lettura.
+Inoltre dovrei evitare di copiare i file temporanei: come i file di paginazione e ibernazione.
+Comunque il Backup Fisico e': \textit{facile da implementare e ha poche probabilita di fallire}.
+
+La limitazione piu' grande del backup fisico riguarda la \textit{difficolta nel ripristinare file individuali a partire da questo.}
+
+\subsubsection{Backup Logico}
+Parto da specifiche directory e faccio il backup dei file modificati dopo una data specifica,
+che e' l'ideale per backup incrementali o completi. E' facile anche fare il recupero di specifici file o directory.
+
+\subsubsection{\texttt{rsync}}
+\texttt{rsync} e' usato in unix per \textit{sincronizzare file e cartelle tra due posizioni diverse}.
+Durante il trasferimento dei file \textit{solo le parti di file modificate vengono trasferite}, ed e' ideale per backup, ripristino e sincronizzazione
+in ambito di rete.
+
+E' in grado di effettuare trasferimenti usano la connessione \textbf{SSH}, in modo da essere criptato.
+
+\subsection{Coerenza del file system: Journaling}
+Unix usa \texttt{fsck}, mentre Windows usa \texttt{sfc}, ovvero utility per controllare la coerenza.
+Questo processo e' cruciale per mantenere l'\textbf{integrita' dei dati}. Queste utility vengono eseguite spesso
+dopo un crash, tutta via i file system con \textbf{journaling} gestiscono autonomamente queste incoerenze.
+
+In un file system con journaling, viene mantenuto un \textbf{log} con le operazioni da eseguire. \textit{Tiene traccia
+delle modifiche che verranno apportate al file system}, prima che avvengano effettivamente.
+Le operazioni vengono svolte nel seguente ordine:
+\begin{itemize}
+    \item Il software vuole modificare il file system.
+    \item L'operazione da eseguire viene registrata nel file di log.
+    \item Dopo che e' stata registrata, viene eseguita l'operazione.
+    \item Alla fine l'operazione viene marcata come completata nel file di log.
+\end{itemize}
+
+Il sistema in caso di crash, non deve far altro che recuperare le operazioni da completare dal file di log,
+il sistema sa esattamente cosa deve essere fatto!
+
+\subsection{Sicurezza dei dati: eliminazione sicura}
+Una cancellazione standard non e' abbastanza per rimuovere i file \textbf{fisicamente} dal disco, bisogna
+sovrascrivere in maniera approfondita i dati.
+
+Nei dischi magnetici ci potrebbero essere dei \textbf{residui} che permettono di recuperare i dati con tecniche avanzate.
+
+L'approccio piu' sicuro e' usare \textbf{AES} per cifrare il disco: Windows lo fa in background. La chiave
+master del volume viene cifrata tramite password utente, chiave di ripristino o TPM.
+I dispositivi \textbf{sed} hanno la cifratura integrata ma e' soggetta a vulnerabilita' di sicurezza.
+
+\subsection{VFS: File System Virtuali}
+I sistemi operativi spesso gestiscono piu' file sistem contemporaneamente. Windows usa \texttt{C:}, \texttt{D:}, ecc...
+mentre i sistemi UNIX integrano piu' file sistem dentro una singola struttura gerarchica.
+
+Il \textit{VFS permette di integrare vari file system in una struttura unificata}. Questo ha un livello comune, che interagisce con i 
+file system sottostanti.
+
+L'interfaccia \textbf{inferiore} ha delle funzioni per gestire i file system sottostanti, mentre l'interfaccia \textbf{superiore}
+interagisce con le chiamate di sistema. Queste chiamate sono studiate in modo da funzionare indipendentemente da dove 
+si trova fisicamente il file system con cui mi interfaccio, funziona anche via internet. \\
+
+Ogni volta che un disco deve essere montato, questo si deve \textbf{registrare al VFS}, e deve fornirgli gli indirizzi
+delle procedure che permettono di eseguire le operazioni di lettura e scrittura per quel determinato file system.
+
+IL VFS e' composto da varie strutture dati:
+\begin{itemize}
+    \item \textbf{Superblocco}: Rapprsenta il descrittore di alto livello di un file sistem specifico registrato.
+    Contiene informazioni come la sua dimensione e il tipo.
+    \item \textbf{V-node}: E' l'astrazione di un file interno al VFS. Contiene i metadati di un file e non dipende dal file sistem, permette 
+    di accedere al file e i suoi dati indipendentemente dal file system astratto.
+    \item \textbf{Directory}: Contiene le associazioni tra nomi dei file e v-node.
+\end{itemize}
+
+Queste informazioni vengono caricate in RAM all'occorrenza.
+
+\subsection{RAID: redoundant array of inxpensive disks}
+\begin{itemize}
+    \item RAID 0: distribuisco i dati in \textbf{strisce} su tutti i dischi disponibili. Migliori performance
+    quando leggo molti dati.
+    \item RAID 1: rispetto a RAID 0 duplico il numero di dischi e li uso come backup. Migliora le performance in lettura.
+    \item RAID 2: i bit di una strip sono distribuiti su altrettanti dischi
+    \item RAID 3: ho 4 dischi per scrivere parole di 4 bit e ne ho uno di parita. Cosi posso
+    ricostruire un disco se si rompe.
+    \item RAID 4: come RAID 3 ma lavora usando strip di dati. 
+    \item RAID 5: come RAID 4, ma le strip di parita sono distribute su tutti i dischi.
+    \item RAID 6: come RAID 5, ma invece di 1 strip di parita ne ho 2 per gli stessi dati.
+\end{itemize}
+
+\subsection{Considerazioni sui file system}
+\textbf{ext2} viene introdotto nel 1993, per risolvere i problemi di ext.
+Con \textbf{ext3} viene introdotto il journaling, e il progetto viene costantemente modificato
+ma ad un certo punto si decide di passare a \textbf{ext4}.
+
+\subsubsection{ext4}
+Le caratteristiche di \textbf{ext4} sono:
+\begin{itemize}
+    \item uso degli \texttt{extent} per gestire prozioni continue di blocchi.
+    \item compatibile con \texttt{ext3} e \texttt{ext2}
+    \item file grandi fino a $16TB$ e file system grandi fino a $1EB.$
+    \item uso di un Journaling Block Device per le operazioni di log.
+\end{itemize}
+
+\subsubsection{btrfs}
+e' figo perche':
+\begin{itemize}
+    \item Copy-on-write: quando duplico un file ne viene creata una copia effettiva solo quando lo modifico.
+    \item Quando modifico i dati, queste si trovano in una porzione differente del disco.
+    \item File di grandezza fino a $16exbibyte$
+    \item supporto a RAID
+    \item deframmentazione e ridimensionamento mentre il sistema e' acceso.
+    \item allocazione dinamica degli inode.
+    \item supporto per snapshot
+    \item supporto per checksum
+    \item migliori prestazioni su ssd, "ne allunga la vita".
+\end{itemize}
+
+anche se btrfs ha molte funzionalita avanzate e' giovane rispetto a ext4, quindi meno affidabile.
+
+\subsection{Struttura delle cartelle!}
+\begin{itemize}
+    \item \texttt{/bin}: binari dei principali comandi di sistema, come \texttt{cat,ls,pwd}
+    \item \texttt{/etc}: file di configurazione
+    \item \texttt{/usr}: file di sistema, e pacchetti utente
+    \item \texttt{/sbin}: binari di sistema, comandi come \texttt{ifconfig,mkfs,fdisk}
+    \item \texttt{/lib}: librerie condivise.
 \end{itemize}
