@@ -1,0 +1,237 @@
+\subsection{\texttt{pthread\_create}, \texttt{pthread\_join}, \texttt{pthread\_exit}}
+
+\texttt{pthread\_join} aspetta che il thread specificato termini, posso anche
+fornire un puntatore alla variabile che conterra' il valore di ritorno. \\
+
+\texttt{pthread\_create} crea il thread. Puo' richiedere un oggetto \texttt{pthread\_attr\_t}
+con gli attributi di inizializzazione del thread. 
+
+\begin{lstlisting}[language=C]
+#define NUMBER_OF_THREADS 10
+
+void *print_hello_world(void * tid){
+    int r = rand()%5;
+    sleep(r);
+    printf("Thread: %d\n", tid);
+    pthread_exit(NULL);
+}
+
+int main(int arg, char* argv[]) {
+    pthread_t threads[NUMBER_OF_THREADS];
+    int status, i;
+
+    for(i=0; i < NUMBER_OF_THREADS; i++){
+        status = pthread_create(&threads[i], NULL, 
+            print_hello_world, (void *)i);
+
+        if(status == 0)
+            printf("thread %d created, status %d\n", 
+                i, status);
+        else {
+            printf("error: thread %d\n", i);
+            exit(-1);
+        }
+    }
+
+    for (i=0; i < NUMBER_OF_THREADS; i++) {
+        status = pthread_join(threads[i], NULL);
+        printf("%d terminated, status %d", i, status);
+
+        if(status != 0){
+            printf("%d has a problem\n", i);
+            exit(-1);
+        }
+    }
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Semafori}
+\texttt{mutex, empty e full} sono i semafori che regolano l'accesso al buffer. 
+Il produtture prima di inserire un oggetto nel buffer controlla il semaforo \texttt{empty} e \texttt{mutex}.
+Il consumatore invece controlla il semafor \texttt{full} 
+
+\begin{lstlisting}[language=c]
+#include <pthread.h> 
+#include <stdio.h> 
+#include <stdlib.h>
+#include <unistd.h>
+#include <semaphore.h>
+
+#define N 10
+#define TRUE 1
+
+sem_t mutex;
+sem_t empty;
+sem_t full;
+
+int buffer[N];
+int in = 0;
+
+void down(sem_t *sem){
+    sem_wait(sem);
+}
+
+void up(sem_t *sem){
+    sem_post(sem);
+}
+
+void insert_item(){
+    int item = rand() % 100;
+    printf("%d, %d", item, n+1);
+    buffer[in] = item;
+    in++;
+}
+
+void remove_item() {
+    printf("%i", in);
+    int item = buffer[in - 1];
+    printf("\nPrelevo %d da posizione %d\n", item, in);
+    in--;
+}
+
+void *producer(void *args){
+    while(TRUE) {
+        down(&empty);
+        down(&mutex);
+
+        insert_item();
+        print_buffer();
+
+        up(&mutex);
+        up(&full);
+    }
+}
+
+void *consumer(void *args) {
+    while (TRUE){
+        down(&full);
+        down(&mutex);
+
+        remove_item();
+        print_buffer();
+
+        up(&mutex);
+        up(&empty);
+    }
+}
+
+int main() {
+    pthread_t prod, cons;
+
+    sem_init(&mutex, 0, 1);
+    sem_init(&mutex, 0, N);
+    sem_init(&full,  0, 0);
+
+    pthread_create(&prod, NULL, producer, NULL);
+    pthread_create(&prod, NULL, consumer, NULL);
+
+    pthread_join(prod, NULL);
+    pthread_join(cons, NULL);
+
+    sem_destroy(&mutex);
+    sem_destroy(&empty);
+    sem_destroy(&full);
+
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Lettori e Scrittore}
+Ipotizzo di avere tanti lettori e un solo scrittore. L'accesso ai lettori e' regolato nel seguente modo:
+la variabile \texttt{rc} conta quanti lettori ci sono al corrente, una volta che un lettore blocca lo scrittore 
+dall'accesso al buffer, non c'e' bisogno che gli altri lettori facciano lo stesso. Solo il primo blocca \texttt{db}
+e l'ultimo lettore a legger sblocca \texttt{db}.
+
+L'unica cosa che deve essere regolata tra tutti i lettori e' l'accesso al \texttt{rc} stesso.
+
+\begin{lstlisting}[language=c]
+void *reader(void *argc){
+    wihle(TRUE){
+        down(&mutex);
+        rc++;
+        if(rc==1) down(&db);
+        up(&mutex);
+
+        read_database();
+
+        down(&mutex);
+        rc--;
+        if(rc==0) up(&db);
+        up(&mutex);
+
+        use_data_read();
+    }
+}
+
+void *writer(void *arg){
+    while(TRUE)[
+        think_up_data();
+        
+        // L'accesso al database e' bloccato
+        down(&db);
+        write_database();
+        up(&db);
+    ]
+}
+\end{lstlisting}
+
+\subsection{Mutex}
+\begin{lstlisting}[language=c]
+pthread_mutex_t the_mutex;
+pthread_cond_t condc, condp;
+
+int buffer = 0;
+
+void *producer(void *ptr){
+    int i;
+    for (i = 1; i <= MAX; i++) {
+        pthread_mutex_lock(&the_mutex);
+
+        while (buffer != 0)
+            pthread_cond_wait(&condp, &the_mutex);
+        
+        buffer = i;
+
+        pthread_cond_signal(&condc);
+        pthread_mutex_unlock(&the_mutex);
+    }
+
+    pthread_exit(0);
+}
+
+void *consumer(void *ptr) {
+    int i;
+    for(i=1; i<=MAX; i++){
+        pthreaD_mutex_lock(&the_mutex);
+        while(buffer == 0){
+            pthrea_cond_wait(&condc, &the_mutex);
+        }
+
+        // usa il buffer
+
+        pthread_cond_signal(&condp);
+        pthread_mutex_unlock(&the_mutex);
+    }
+    pthread_exit(0);
+}
+\end{lstlisting}
+
+\subsection{Esercizio}
+Il programma chiesto deve creare altri due processi \texttt{p1} e \texttt{p2}.
+Entrambi generano dei numeri da 0 a 100, ma, p1 invia al processo padre solo
+i numeri dispari, mentre p2 invia al padre solo i numeri pari.
+Una volta che il processo padre ha ricevuto una coppia di numeri pari e dispari, ne fa la 
+somma, se e' maggiore di 190 l'esecuzione del programma termina.
+
+Le chiamate di sisteme e procedure necessarie per creare il codice sono:
+\begin{itemize}
+    \item \texttt{pipe}, per creare le due pipe, una per processo figlio.
+    \item \texttt{fork}, per creare i processi figli.
+    \item \texttt{perror}, per comunicare gli errori delle chiamate di sistema.
+    \item \texttt{read/write}, per leggere e scrivere sui file descriptor.
+    \item \texttt{kill}, per mandare il segnale di terminazione ai processi figli.
+    \item \texttt{waitpid}, per aspettare che i figli terminino l'esecuzione.
+\end{itemize}
+
+Per randomizzare al meglio la generazione dei numeri si aggiora il seed con: \texttt{srand(time(NULL) \^ getpid())}.

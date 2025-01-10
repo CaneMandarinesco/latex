@@ -1,0 +1,333 @@
+\documentclass{article}
+
+\usepackage[italian]{babel}
+\usepackage{listings}
+\usepackage{amsmath}
+\usepackage{tikz}
+
+\title{Riassuntazzo Algoritmi e Strutture Dati Mod. 1}
+\author{Davide Luci}
+\date{2024}
+
+\newtheorem{definition}{Definition}[section]
+
+\begin{document}
+    \maketitle
+    \pagenumbering{gobble}
+    \newpage
+
+    \section{Esercizio 1}
+    \subsection{Testo}
+    $G=(V,E)$ e' un grafo non pesato dove ogni arco $e \in E$, 
+    ha uno fra tre possibili colori: $\{1,2,3\}$. $U \subseteq V$ e' un insieme
+    di nodi speciali. \\
+    Su un nodo $s \in V$ viene posizionata una pedina, questa ha colore $colore(pedina) = 1$, e deve arrivare al nodo $t \in V$. \\
+
+    Per muovere la pedina posso fare le seguenti mosse:
+    \begin{itemize}
+        \item \textbf{sposta}: la pedina sul nodo $u \in V$ ha colore $i$ e puo' spostarsi
+        ad uno dei nodi adiacenti praticando un arco del suo stesso colore.
+        \item \textbf{cambia colore}: se la pedina si trova su un nodo $u \in U$, posso cambiare il colore
+        della pedina, e dopo la mossa questa rimane sul nodo $u$.
+    \end{itemize}
+
+    Progettare quindi un algoritmo efficiente che trova se ne esiste una, la sequenza
+    piu' corta di mosse che risolve l'istanza di gioco.
+
+    Esempio di istanza, dove gli archi blu sono i nodi speciali, invece gli archi sono $1=rosso, 2=nero, 3=verde$:
+    
+
+\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt        
+
+\begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+%uncomment if require: \path (0,300); %set diagram left start at 0, and has height of 300
+
+%Flowchart: Connector [id:dp8191842645351067] 
+\draw   (50,136) .. controls (50,127.72) and (56.72,121) .. (65,121) .. controls (73.28,121) and (80,127.72) .. (80,136) .. controls (80,144.28) and (73.28,151) .. (65,151) .. controls (56.72,151) and (50,144.28) .. (50,136) -- cycle ;
+%Flowchart: Connector [id:dp516646914878837] 
+\draw  [fill={rgb, 255:red, 74; green, 144; blue, 226 }  ,fill opacity=1 ] (120,86) .. controls (120,77.72) and (126.72,71) .. (135,71) .. controls (143.28,71) and (150,77.72) .. (150,86) .. controls (150,94.28) and (143.28,101) .. (135,101) .. controls (126.72,101) and (120,94.28) .. (120,86) -- cycle ;
+%Flowchart: Connector [id:dp036792901218554275] 
+\draw   (120,136) .. controls (120,127.72) and (126.72,121) .. (135,121) .. controls (143.28,121) and (150,127.72) .. (150,136) .. controls (150,144.28) and (143.28,151) .. (135,151) .. controls (126.72,151) and (120,144.28) .. (120,136) -- cycle ;
+%Flowchart: Connector [id:dp8589090895171574] 
+\draw   (120,186) .. controls (120,177.72) and (126.72,171) .. (135,171) .. controls (143.28,171) and (150,177.72) .. (150,186) .. controls (150,194.28) and (143.28,201) .. (135,201) .. controls (126.72,201) and (120,194.28) .. (120,186) -- cycle ;
+%Straight Lines [id:da17815620152481249] 
+\draw    (65,136) -- (135,186) ;
+%Straight Lines [id:da8708549951977052] 
+\draw [color={rgb, 255:red, 208; green, 2; blue, 27 }  ,draw opacity=1 ]   (65,136) -- (135,136) ;
+%Straight Lines [id:da2233806714422797] 
+\draw [color={rgb, 255:red, 208; green, 2; blue, 27 }  ,draw opacity=1 ]   (65,136) -- (135,86) ;
+%Flowchart: Connector [id:dp14845561101364046] 
+\draw   (190,55) .. controls (190,46.72) and (196.72,40) .. (205,40) .. controls (213.28,40) and (220,46.72) .. (220,55) .. controls (220,63.28) and (213.28,70) .. (205,70) .. controls (196.72,70) and (190,63.28) .. (190,55) -- cycle ;
+%Straight Lines [id:da6110767019120421] 
+\draw    (135,86) -- (205,55) ;
+%Straight Lines [id:da5035143517577386] 
+\draw [color={rgb, 255:red, 126; green, 211; blue, 33 }  ,draw opacity=1 ]   (135,86) -- (135,136) ;
+%Flowchart: Connector [id:dp9796025817203441] 
+\draw   (190,105) .. controls (190,96.72) and (196.72,90) .. (205,90) .. controls (213.28,90) and (220,96.72) .. (220,105) .. controls (220,113.28) and (213.28,120) .. (205,120) .. controls (196.72,120) and (190,113.28) .. (190,105) -- cycle ;
+%Flowchart: Connector [id:dp7128175312135231] 
+\draw  [fill={rgb, 255:red, 74; green, 144; blue, 226 }  ,fill opacity=1 ] (190,155) .. controls (190,146.72) and (196.72,140) .. (205,140) .. controls (213.28,140) and (220,146.72) .. (220,155) .. controls (220,163.28) and (213.28,170) .. (205,170) .. controls (196.72,170) and (190,163.28) .. (190,155) -- cycle ;
+%Straight Lines [id:da04042422184861039] 
+\draw    (135,136) -- (205,105) ;
+%Straight Lines [id:da6792466314337176] 
+\draw [color={rgb, 255:red, 126; green, 211; blue, 33 }  ,draw opacity=1 ]   (135,136) -- (205,155) ;
+%Flowchart: Connector [id:dp17206406605006275] 
+\draw   (190,225) .. controls (190,216.72) and (196.72,210) .. (205,210) .. controls (213.28,210) and (220,216.72) .. (220,225) .. controls (220,233.28) and (213.28,240) .. (205,240) .. controls (196.72,240) and (190,233.28) .. (190,225) -- cycle ;
+%Straight Lines [id:da0694412695281097] 
+\draw    (135,186) -- (205,225) ;
+%Flowchart: Connector [id:dp4247476822129138] 
+\draw   (250,85) .. controls (250,76.72) and (256.72,70) .. (265,70) .. controls (273.28,70) and (280,76.72) .. (280,85) .. controls (280,93.28) and (273.28,100) .. (265,100) .. controls (256.72,100) and (250,93.28) .. (250,85) -- cycle ;
+%Flowchart: Connector [id:dp1760389501053916] 
+\draw  [fill={rgb, 255:red, 74; green, 144; blue, 226 }  ,fill opacity=1 ] (250,135) .. controls (250,126.72) and (256.72,120) .. (265,120) .. controls (273.28,120) and (280,126.72) .. (280,135) .. controls (280,143.28) and (273.28,150) .. (265,150) .. controls (256.72,150) and (250,143.28) .. (250,135) -- cycle ;
+%Flowchart: Connector [id:dp25969182081537967] 
+\draw   (250,195) .. controls (250,186.72) and (256.72,180) .. (265,180) .. controls (273.28,180) and (280,186.72) .. (280,195) .. controls (280,203.28) and (273.28,210) .. (265,210) .. controls (256.72,210) and (250,203.28) .. (250,195) -- cycle ;
+%Straight Lines [id:da08516076614337731] 
+\draw [color={rgb, 255:red, 208; green, 2; blue, 27 }  ,draw opacity=1 ]   (205,55) -- (265,85) ;
+%Straight Lines [id:da19039372423095535] 
+\draw    (265,85) -- (265,135) ;
+%Straight Lines [id:da4664696549550812] 
+\draw    (265,135) -- (265,195) ;
+%Straight Lines [id:da5425871440427411] 
+\draw [color={rgb, 255:red, 126; green, 211; blue, 33 }  ,draw opacity=1 ]   (205,105) -- (265,85) ;
+%Straight Lines [id:da47191368074957696] 
+\draw [color={rgb, 255:red, 208; green, 2; blue, 27 }  ,draw opacity=1 ]   (205,155) -- (265,135) ;
+%Straight Lines [id:da6951249149873974] 
+\draw    (205,155) -- (265,195) ;
+%Straight Lines [id:da18670444723008495] 
+\draw    (205,225) -- (265,195) ;
+
+% Text Node
+\draw (31,122.4) node [anchor=north west][inner sep=0.75pt]    {$s$};
+% Text Node
+\draw (288,183.4) node [anchor=north west][inner sep=0.75pt]    {$t$};
+
+
+\end{tikzpicture}
+
+Dove la strategia migliore e' la seguente, e richiede 6 mosse:
+
+
+\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt        
+
+\begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+%uncomment if require: \path (0,300); %set diagram left start at 0, and has height of 300
+
+%Flowchart: Connector [id:dp9199593157861753] 
+\draw   (43,112) .. controls (43,103.72) and (49.72,97) .. (58,97) .. controls (66.28,97) and (73,103.72) .. (73,112) .. controls (73,120.28) and (66.28,127) .. (58,127) .. controls (49.72,127) and (43,120.28) .. (43,112) -- cycle ;
+%Flowchart: Connector [id:dp4569920465412569] 
+\draw  [fill={rgb, 255:red, 74; green, 144; blue, 226 }  ,fill opacity=1 ] (113,62) .. controls (113,53.72) and (119.72,47) .. (128,47) .. controls (136.28,47) and (143,53.72) .. (143,62) .. controls (143,70.28) and (136.28,77) .. (128,77) .. controls (119.72,77) and (113,70.28) .. (113,62) -- cycle ;
+%Flowchart: Connector [id:dp15628642330441356] 
+\draw   (113,112) .. controls (113,103.72) and (119.72,97) .. (128,97) .. controls (136.28,97) and (143,103.72) .. (143,112) .. controls (143,120.28) and (136.28,127) .. (128,127) .. controls (119.72,127) and (113,120.28) .. (113,112) -- cycle ;
+%Flowchart: Connector [id:dp8717143314148846] 
+\draw   (113,162) .. controls (113,153.72) and (119.72,147) .. (128,147) .. controls (136.28,147) and (143,153.72) .. (143,162) .. controls (143,170.28) and (136.28,177) .. (128,177) .. controls (119.72,177) and (113,170.28) .. (113,162) -- cycle ;
+%Straight Lines [id:da25689992574702825] 
+\draw    (58,112) -- (128,162) ;
+%Straight Lines [id:da07739561472332879] 
+\draw [color={rgb, 255:red, 208; green, 2; blue, 27 }  ,draw opacity=1 ]   (58,112) -- (128,112) ;
+%Straight Lines [id:da08743364756883953] 
+\draw [color={rgb, 255:red, 208; green, 2; blue, 27 }  ,draw opacity=1 ][line width=3]    (58,112) -- (82.85,94.25) -- (128,62) ;
+%Flowchart: Connector [id:dp4856458311029238] 
+\draw   (183,31) .. controls (183,22.72) and (189.72,16) .. (198,16) .. controls (206.28,16) and (213,22.72) .. (213,31) .. controls (213,39.28) and (206.28,46) .. (198,46) .. controls (189.72,46) and (183,39.28) .. (183,31) -- cycle ;
+%Straight Lines [id:da7465254289380626] 
+\draw    (128,62) -- (198,31) ;
+%Straight Lines [id:da7482137284406702] 
+\draw [color={rgb, 255:red, 126; green, 211; blue, 33 }  ,draw opacity=1 ][line width=3.75]    (128,62) -- (128,112) ;
+%Flowchart: Connector [id:dp8159461815092505] 
+\draw   (183,81) .. controls (183,72.72) and (189.72,66) .. (198,66) .. controls (206.28,66) and (213,72.72) .. (213,81) .. controls (213,89.28) and (206.28,96) .. (198,96) .. controls (189.72,96) and (183,89.28) .. (183,81) -- cycle ;
+%Flowchart: Connector [id:dp7504249466654865] 
+\draw  [fill={rgb, 255:red, 74; green, 144; blue, 226 }  ,fill opacity=1 ] (183,131) .. controls (183,122.72) and (189.72,116) .. (198,116) .. controls (206.28,116) and (213,122.72) .. (213,131) .. controls (213,139.28) and (206.28,146) .. (198,146) .. controls (189.72,146) and (183,139.28) .. (183,131) -- cycle ;
+%Straight Lines [id:da2553632172122551] 
+\draw    (128,112) -- (198,81) ;
+%Straight Lines [id:da28312478728261026] 
+\draw [color={rgb, 255:red, 126; green, 211; blue, 33 }  ,draw opacity=1 ][line width=3.75]    (128,112) -- (198,131) ;
+%Flowchart: Connector [id:dp11800736173112247] 
+\draw   (183,201) .. controls (183,192.72) and (189.72,186) .. (198,186) .. controls (206.28,186) and (213,192.72) .. (213,201) .. controls (213,209.28) and (206.28,216) .. (198,216) .. controls (189.72,216) and (183,209.28) .. (183,201) -- cycle ;
+%Straight Lines [id:da9236906976401295] 
+\draw    (128,162) -- (198,201) ;
+%Flowchart: Connector [id:dp30043692359945595] 
+\draw   (243,61) .. controls (243,52.72) and (249.72,46) .. (258,46) .. controls (266.28,46) and (273,52.72) .. (273,61) .. controls (273,69.28) and (266.28,76) .. (258,76) .. controls (249.72,76) and (243,69.28) .. (243,61) -- cycle ;
+%Flowchart: Connector [id:dp0656324627615934] 
+\draw  [fill={rgb, 255:red, 74; green, 144; blue, 226 }  ,fill opacity=1 ] (243,111) .. controls (243,102.72) and (249.72,96) .. (258,96) .. controls (266.28,96) and (273,102.72) .. (273,111) .. controls (273,119.28) and (266.28,126) .. (258,126) .. controls (249.72,126) and (243,119.28) .. (243,111) -- cycle ;
+%Flowchart: Connector [id:dp20893989967268967] 
+\draw   (243,171) .. controls (243,162.72) and (249.72,156) .. (258,156) .. controls (266.28,156) and (273,162.72) .. (273,171) .. controls (273,179.28) and (266.28,186) .. (258,186) .. controls (249.72,186) and (243,179.28) .. (243,171) -- cycle ;
+%Straight Lines [id:da13080670634319735] 
+\draw [color={rgb, 255:red, 208; green, 2; blue, 27 }  ,draw opacity=1 ]   (198,31) -- (258,61) ;
+%Straight Lines [id:da9561670659106879] 
+\draw    (258,61) -- (258,111) ;
+%Straight Lines [id:da0110470939302727] 
+\draw    (258,111) -- (258,171) ;
+%Straight Lines [id:da3727943995639489] 
+\draw [color={rgb, 255:red, 126; green, 211; blue, 33 }  ,draw opacity=1 ]   (198,81) -- (258,61) ;
+%Straight Lines [id:da5980077996230021] 
+\draw [color={rgb, 255:red, 208; green, 2; blue, 27 }  ,draw opacity=1 ]   (198,131) -- (258,111) ;
+%Straight Lines [id:da20000621327500256] 
+\draw [line width=3.75]    (198,131) -- (258,171) ;
+%Straight Lines [id:da6117796469261327] 
+\draw    (198,201) -- (258,171) ;
+
+% Text Node
+\draw (24,98.4) node [anchor=north west][inner sep=0.75pt]    {$s$};
+% Text Node
+\draw (281,159.4) node [anchor=north west][inner sep=0.75pt]    {$t$};
+
+
+\end{tikzpicture}
+
+\subsection{Idea}
+Per questo tipo di problemi conviene fare riferimento al grafo pesato delle configurazioni: $\hat G = (\hat V, \hat E, w)$
+
+Ogni nodo $v \in \hat V$ rappresenta dove si trova la pedina e quale colore ha, 
+bisogna tenere presente che e' possibile raggiungere lo stesso nodo ma con diversi colori.
+
+Chiamiamo $f$ la funzione che associa ad ogni nodo $v \in \hat G$, il nodo $v' \in G$ sul quale e' posiziona la pedina.
+Diremo allora che nodi $v,u \in \hat G$, sono adiacenti se e solo se la pedina puo' muoversi da $f(v)$ a $f(u)$ in uno di questi due modi:
+\begin{itemize}
+    \item praticando un'arco del suo stesso colore.
+    \item cambiando colore e praticando un'arco di quel colore. (ricordando che cio' e possibile se $v \in U$)
+\end{itemize}
+
+Il peso dell'arco $(v,u)$ e' deciso dal tipo di mossa usata: $w(v,u)=1$ indica che la mossa non richiede di cambiare colore, $w(v,u)=2$ invece indica che la mossa richiede di cambiare colore. 
+
+A seconda dell'istanza ci potrebbero essere (per vari motivi) configurazioni impossibili da raggiungere, quindi a noi ci interessa 
+trovare il grafo connesso $H \subseteq G$. 
+Per trovare il numero di mosse minimo per risolvere il problema basta applicare l'algoritmo di Dijkstra sul grafo $H$ alla ricerca di tutte le configurazioni
+in cui la pedina si trova su $t$ con tutti i colori possibili.
+
+Il grafo H per l'esempio sopra e':
+
+
+\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt        
+
+\begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+%uncomment if require: \path (0,300); %set diagram left start at 0, and has height of 300
+
+%Flowchart: Connector [id:dp3129826377139767] 
+\draw   (50,130) .. controls (50,118.95) and (58.95,110) .. (70,110) .. controls (81.05,110) and (90,118.95) .. (90,130) .. controls (90,141.05) and (81.05,150) .. (70,150) .. controls (58.95,150) and (50,141.05) .. (50,130) -- cycle ;
+%Flowchart: Connector [id:dp8794222816749072] 
+\draw   (50,200) .. controls (50,188.95) and (58.95,180) .. (70,180) .. controls (81.05,180) and (90,188.95) .. (90,200) .. controls (90,211.05) and (81.05,220) .. (70,220) .. controls (58.95,220) and (50,211.05) .. (50,200) -- cycle ;
+%Flowchart: Connector [id:dp9132251539419753] 
+\draw   (120,240) .. controls (120,228.95) and (128.95,220) .. (140,220) .. controls (151.05,220) and (160,228.95) .. (160,240) .. controls (160,251.05) and (151.05,260) .. (140,260) .. controls (128.95,260) and (120,251.05) .. (120,240) -- cycle ;
+%Flowchart: Connector [id:dp4119327803710512] 
+\draw   (200,240) .. controls (200,228.95) and (208.95,220) .. (220,220) .. controls (231.05,220) and (240,228.95) .. (240,240) .. controls (240,251.05) and (231.05,260) .. (220,260) .. controls (208.95,260) and (200,251.05) .. (200,240) -- cycle ;
+%Flowchart: Connector [id:dp7025460259666142] 
+\draw   (280,200) .. controls (280,188.95) and (288.95,180) .. (300,180) .. controls (311.05,180) and (320,188.95) .. (320,200) .. controls (320,211.05) and (311.05,220) .. (300,220) .. controls (288.95,220) and (280,211.05) .. (280,200) -- cycle ;
+%Straight Lines [id:da4493636009289731] 
+\draw    (90,210) -- (120,230) ;
+%Straight Lines [id:da5924483593844535] 
+\draw    (160,240) -- (200,240) ;
+%Straight Lines [id:da5842042794934132] 
+\draw    (240,240) -- (280,210) ;
+%Flowchart: Connector [id:dp9019317314911615] 
+\draw   (200,160) .. controls (200,148.95) and (208.95,140) .. (220,140) .. controls (231.05,140) and (240,148.95) .. (240,160) .. controls (240,171.05) and (231.05,180) .. (220,180) .. controls (208.95,180) and (200,171.05) .. (200,160) -- cycle ;
+%Straight Lines [id:da03531901792953229] 
+\draw [color={rgb, 255:red, 208; green, 2; blue, 27 }  ,draw opacity=1 ]   (240,160) -- (280,190) ;
+%Flowchart: Connector [id:dp403109056876814] 
+\draw   (280,120) .. controls (280,108.95) and (288.95,100) .. (300,100) .. controls (311.05,100) and (320,108.95) .. (320,120) .. controls (320,131.05) and (311.05,140) .. (300,140) .. controls (288.95,140) and (280,131.05) .. (280,120) -- cycle ;
+%Straight Lines [id:da14680141620060627] 
+\draw    (240,160) -- (280,130) ;
+%Flowchart: Connector [id:dp9723923738848813] 
+\draw   (360,70) .. controls (360,58.95) and (368.95,50) .. (380,50) .. controls (391.05,50) and (400,58.95) .. (400,70) .. controls (400,81.05) and (391.05,90) .. (380,90) .. controls (368.95,90) and (360,81.05) .. (360,70) -- cycle ;
+%Straight Lines [id:da026349705680107416] 
+\draw    (320,110) -- (360,80) ;
+%Straight Lines [id:da685327704411615] 
+\draw    (300,180) -- (300,140) ;
+%Flowchart: Connector [id:dp0384192580981394] 
+\draw   (120,80) .. controls (120,68.95) and (128.95,60) .. (140,60) .. controls (151.05,60) and (160,68.95) .. (160,80) .. controls (160,91.05) and (151.05,100) .. (140,100) .. controls (128.95,100) and (120,91.05) .. (120,80) -- cycle ;
+%Flowchart: Connector [id:dp31876671468203877] 
+\draw   (120,160) .. controls (120,148.95) and (128.95,140) .. (140,140) .. controls (151.05,140) and (160,148.95) .. (160,160) .. controls (160,171.05) and (151.05,180) .. (140,180) .. controls (128.95,180) and (120,171.05) .. (120,160) -- cycle ;
+%Flowchart: Connector [id:dp4580202497993583] 
+\draw   (200,80) .. controls (200,68.95) and (208.95,60) .. (220,60) .. controls (231.05,60) and (240,68.95) .. (240,80) .. controls (240,91.05) and (231.05,100) .. (220,100) .. controls (208.95,100) and (200,91.05) .. (200,80) -- cycle ;
+%Straight Lines [id:da8158633985414164] 
+\draw [color={rgb, 255:red, 208; green, 2; blue, 27 }  ,draw opacity=1 ]   (80,110) -- (120,90) ;
+%Straight Lines [id:da06605872184133732] 
+\draw    (200,80) -- (160,80) ;
+%Straight Lines [id:da5549739943189242] 
+\draw [color={rgb, 255:red, 208; green, 2; blue, 27 }  ,draw opacity=1 ]   (140,140) -- (140,100) ;
+%Straight Lines [id:da1721217663877299] 
+\draw [color={rgb, 255:red, 208; green, 2; blue, 27 }  ,draw opacity=1 ]   (200,160) -- (173,160) -- (160,160) ;
+
+% Text Node
+\draw (25,108.4) node [anchor=north west][inner sep=0.75pt]    {$s$};
+% Text Node
+\draw (58,120.4) node [anchor=north west][inner sep=0.75pt]    {$a,1$};
+% Text Node
+\draw (58,190.4) node [anchor=north west][inner sep=0.75pt]    {$a,2$};
+% Text Node
+\draw (128,230.4) node [anchor=north west][inner sep=0.75pt]    {$d,2$};
+% Text Node
+\draw (208,232.4) node [anchor=north west][inner sep=0.75pt]    {$h,2$};
+% Text Node
+\draw (288,192.4) node [anchor=north west][inner sep=0.75pt]    {$k,2$};
+% Text Node
+\draw (337,192.4) node [anchor=north west][inner sep=0.75pt]    {$t$};
+% Text Node
+\draw (211,152.4) node [anchor=north west][inner sep=0.75pt]    {$g,3$};
+% Text Node
+\draw (289,112.4) node [anchor=north west][inner sep=0.75pt]    {$j,1$};
+% Text Node
+\draw (369,62.4) node [anchor=north west][inner sep=0.75pt]    {$i,2$};
+% Text Node
+\draw (128,70.4) node [anchor=north west][inner sep=0.75pt]    {$b,1$};
+% Text Node
+\draw (128,150.4) node [anchor=north west][inner sep=0.75pt]    {$c,3$};
+% Text Node
+\draw (211,72.4) node [anchor=north west][inner sep=0.75pt]    {$e,2$};
+% Text Node
+\draw (87,86.4) node [anchor=north west][inner sep=0.75pt]  [font=\footnotesize]  {$1$};
+% Text Node
+\draw (177,142.4) node [anchor=north west][inner sep=0.75pt]  [font=\footnotesize]  {$1$};
+% Text Node
+\draw (101,202.4) node [anchor=north west][inner sep=0.75pt]  [font=\footnotesize]  {$1$};
+% Text Node
+\draw (177,222.4) node [anchor=north west][inner sep=0.75pt]  [font=\footnotesize]  {$1$};
+% Text Node
+\draw (251,212.4) node [anchor=north west][inner sep=0.75pt]  [font=\footnotesize]  {$1$};
+% Text Node
+\draw (151,112.4) node [anchor=north west][inner sep=0.75pt]  [font=\footnotesize]  {$2$};
+% Text Node
+\draw (177,56.4) node [anchor=north west][inner sep=0.75pt]  [font=\footnotesize]  {$2$};
+% Text Node
+\draw (247,132.4) node [anchor=north west][inner sep=0.75pt]  [font=\footnotesize]  {$2$};
+% Text Node
+\draw (251,176.4) node [anchor=north west][inner sep=0.75pt]  [font=\footnotesize]  {$2$};
+% Text Node
+\draw (307,152.4) node [anchor=north west][inner sep=0.75pt]  [font=\footnotesize]  {$2$};
+% Text Node
+\draw (342,98.4) node [anchor=north west][inner sep=0.75pt]  [font=\footnotesize]  {$2$};
+
+
+\end{tikzpicture}
+
+
+\newpage
+\subsection{Pseudocodice}
+
+Per creare il Grafo H applichiamo una visita DFS modificata per il nostro obbiettivo.
+\begin{lstlisting}[mathescape=true]
+procedura visitaDFSRicModificata(vertice v,
+                Grafo H, ColorePedina c):
+    marca $v$ con il colore $c$.
+    for each(arco($v,w$)) do
+
+        if($v \in U$)
+            if w non e' marcato con il colore $c$:
+                visitaDFSRicModifcata(w, T, colore(arco))
+            $v' = (v, c)$
+            $w' = (w, colore(arco))$
+            aggiungi l'arco $(v',w')$ con peso $2$ a $H$ 
+        else if(colore(arco) == c)
+            if w non e' marcato con il colore $c$:
+                visitaDFSRicModificata(w, T, c)
+            $v' = (v,c)$
+            $w' = (w,c)$
+            aggiungi l'arco $(v',w')$ con peso $1$ a $H$
+
+
+algoritmo visitaDFSModificata(vertice s):
+    T = albero vuoto
+    visitaDFSRicModificata($s$,T)
+    return T
+\end{lstlisting}
+
+\subsection{Complessita'}
+
+\end{document}

@@ -1,0 +1,221 @@
+Nota: \texttt{unistd.h} contiene tutte le API richieste dallo standard POSIX,
+cioe' i wrapper per le chiamate di sistema richieste da POSIX.
+
+\subsection{\texttt{write}}
+\begin{lstlisting}[language=c]
+    #include <unistd.h>
+
+       ssize_t write(int fd, const void buf[.count], size_t count);
+\end{lstlisting}
+
+Scrive \texttt{count} byte presi dal buffer in input.
+
+Esempio:
+\begin{lstlisting}[language=c]
+    #include <unistd.h>
+
+    char msg[] = "Hello World!\n";
+    write(STDOUT, msg, sizeof(msg));
+\end{lstlisting}
+
+Esempio deprecato (pericoloso), bypasso il la funzione wrapper:
+\begin{lstlisting}[language=c]
+    #include <unistd.h>
+    #include <stdio.h>
+    #include <sys/syscall.h>
+
+    char msg[] = "Hello World!\n";
+	int nr = SYS_write;
+	syscall(nr, STDOUT, msg, sizeof(msg));
+\end{lstlisting}
+
+\subsection{\texttt{fork}}
+\begin{lstlisting}[language=c]
+    #include <stdio.h> 
+    #include <stdlib.h>
+    #include <unistd.h> 
+    int main(){
+
+        int pid, child_status;
+
+        if ((pid = fork()) == 0) {
+            // Codice del figlio
+        } else { 
+            // Codice del padre
+            wait(&child_status);
+        }
+    }
+\end{lstlisting}
+
+\subsection{\texttt{fork}, \text{dup}, \text{execl}, \text{waitpid}}
+
+\begin{lstlisting}[language=c]
+    #include <unistd.h>
+
+    int dup(int oldfd);
+    int dup2(int oldfd, int newfd);
+\end{lstlisting}
+
+\texttt{dup} crea un nuovo file descriptor che punta allo 
+stesso file del descrittore \texttt{oldfd}. Il risultato e' che
+se prima chiudo un file descriptor e poi chiamo \texttt{dup}, 
+usare il file descriptor chiuso equivale ad utilizzare il nuovo file descriptor.
+Infatti, puntano entrambi allo stesso file.
+
+Per meglio precisare: il vecchio file descriptor scelto da \text{dup} e' quello 
+piu' basso che e' stato chiuso.
+
+\begin{lstlisting}[language=c]
+    #include <stdio.h> 
+    #include <stdlib.h>
+    #include <unistd.h> 
+    int main(){
+
+        pid_t cat_pid, sort_pid;
+        int fd[2];
+
+        pipe(fd);
+        
+        cat_pid = fork();
+        if(cat_pid==0){
+            // processo cat
+            close(fd[PIPE_RD]);
+            close(STDOUT);
+
+            // ora l'output e' dirottato sulla pipe
+            dup(fd[PIPE_WR]);
+            execl("/bin/cat", "cat", "names.txt", NULL);
+        }
+
+        sort_pid = fork();
+
+        if(sort_pid == 0){
+            close(fd[PIPE_WR]);
+            close(STDIN);
+
+            dup(fd[PIPE_RD]);
+
+            execl("/usr/bin/sort", "sort", NULL)
+        }
+
+        // chiude il file descriptor
+        close(fd[PIPE_RD]);
+        close(fd[PIPE_WR]);
+
+        // aspetta che il processo termina
+        waitpid(cat_pid, NULL, 0);
+        waitpid(sort_pid, NULL, 0);
+    }
+\end{lstlisting}
+
+\subsection{\texttt{signal}}
+\begin{lstlisting}[language=c]
+    #include <signal.h>
+    #include <unistd.h>
+    #include <string.h>
+
+    void sigHandler(int signum){
+        printf("Interrupt sig %d: %s", signum, 
+            strsignal(signum));
+        exit(signum);
+    }
+
+    int main(){
+        signal(SIGINT, sigHandler); // CTRL+C
+
+        while(1){
+            printf("Sleep\n");
+            sleep(1);
+        }
+
+        return 0;
+    }
+\end{lstlisting}
+
+Si puo' fare la stessa cosa ma con \texttt{SIGALARM}.
+Questo segnale viene scatenato dalla funzione \texttt{alarm(1)}.
+
+\subsection{Shell}
+\begin{lstlisting}[language=c]
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+int main(){
+    while(1){
+        char cmd[256], *args[256];
+        int status;
+        pid_t pid;
+
+        read_command(cmd, args);
+
+        if (strcmp(cmd,"exit") == 0) 
+            exit(0);
+        
+        pid = fork();
+        if(pid < 0){
+            perror("fork failed");
+            exit(0);
+        }
+        if (pid == 0){
+            if(execvp(cmd, args) == -1){
+                perror("...");
+                exit(0);
+            }
+        } else {
+            if (wait(&status) == -1){
+                perror("...");
+                exit(0);
+            }
+        }
+
+        free_args(args);
+    }
+}
+\end{lstlisting}
+
+\texttt{perror} scrive un messaggio nello \texttt{stderr}. \\
+\texttt{wait} aspetta che un figlio cambi stato.
+
+\begin{lstlisting}[language=c]
+void read_command(char *cmd, char **args){
+    char* input = NULL;
+    size_t len = 0;
+    printf("myshell> ");
+    ssize_t read_len = 
+        getline(&input, &len, stdin);
+
+    if(read_len == -1){
+        // CTRL-D pressed.
+        printf("\n");
+        exit(0);
+    }
+
+    chat* token = strtok(input, " \n");
+
+    int i = 0;
+    while(token){
+        args[i] = strdup(token);
+        if(i == 0)
+            strcpy(cmd, token);
+        token = strtok(NULL, " \n");
+        i++;
+    }
+    args[i] = NULL;
+    free(input);
+}
+
+void free_args(char** args){
+    int i = 0;
+    while(args[i]){
+        free(args[i])
+        i++;
+    }
+}
+\end{lstlisting}
+
+\texttt{strtok} prende la sequenza di caratteri contenuta in uno 
+dei token forniti. Con \lstinline{strtok(NULL, " \n")} ottengo la sequenza successiva.
