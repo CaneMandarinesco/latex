@@ -1,0 +1,68 @@
+\section*{Esercizio 1}
+
+\subsection{Idea}
+
+
+\subsection{Codice}
+\begin{algorithm}[H]
+\SetAlgoLined
+\KwIn{Coppia $(i,j)$, Coppia $(s,t)$, Matrice $M$}
+\KwOut{Sequenza di mosse ottimale per risolvere il livello, o $False$ se cio' non e' possibile}
+
+
+Coda F \;
+Matrice $M'$ di grandezza $n \times n$\;
+F.enqueue($s = [p1: (i,j), p2: (i,j)]$) \;
+\While{\textbf{not} $F.empty()$}{
+    v = F.dequeue() \;
+    $p1_v, p2_v = v.p1, v.p2$ \;
+    \If{$p1_v$ == $p2_v$}{
+        \ForEach{mossa $\in \{u,d,l,r\}$}{
+            \tcp {Ottieni la nuova posizione dopo aver effettuato la mossa}
+            $p1, p2$ = $muoviPedina(v, mossa)$ \;
+            \If{$p1$ e $p2$ sono dentro la mappa e $M[p1], M[p2] \neq -1$}{
+                \tcp{Controlla di non aver gia analizzato la mossa}
+                \If {$p2 \notin M'[p1]$}{
+                    F.enqueue($u = [(p1, p2)]$) \;
+                    M[p1].insert(p2) \;
+                }
+            }
+        }
+        \textbf{continue} \;
+    } 
+    \Else {
+        \ForEach{mossa $\in \{u,d,l,r\}$}{
+            $p1, p2$ = $muoviPedina(v, mossa)$ \;
+            \If{$p1$ e $p2$ sono dentro la mappa e $M[p1], M[p2] \neq -1$}{
+                \tcp{Controlla di non aver gia analizzato la mossa}
+                \If {$p2 \notin M'[p1]$}{
+                    F.enqueue($u = [(p1, p2)]$) \;
+                    M[p1].insert(p2) \;
+                }
+            }
+        }
+    }
+}
+
+\caption{Bloxorz Solver}
+\end{algorithm}
+
+\subsection{Correttezza}
+
+\subsection{Complessita'}
+
+%%% NON TOCCARE QUESTA PARTE
+\newpage
+\begin{tcolorbox}[
+    colback=white,           % sfondo
+    colframe=black,          % colore bordo
+    coltitle=black,          % colore del testo
+    colbacktitle=gray!50,    % sfondo titolo
+    boxrule=1pt,             % spessore del bordo
+    title=\textbf{Commenti Esercizio}
+    ]
+    
+\vspace{45\baselineskip}
+
+\end{tcolorbox}
+\newpage
