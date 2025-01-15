@@ -1,0 +1,224 @@
+Una maccina ha due prospettive:
+\begin{itemize}
+    \item Dimensione software: interfaccia untente, applicazioni e \textbf{sitema operativo}. 
+    \item Dimensione hardware: al programmatore non interessa.
+\end{itemize}
+
+Il Sistema Operativo deve mettere a disposzione dei programmi le risorse hardware,
+funge da arbitro per i processi e vengono eseguiti in modo \textbf{esclusivo}, infatti deve
+poter gestire piu' utenti e condividere tra questi CPU e Memoria.
+
+Il Sistema Operativo mette in sicurezza le risorse hardware, solo il codice del 
+sistema operativo puo' accedere a certe aree di memoria e solo lui puo' eseguire alcune
+operazioni. Questo comportamento e' determinato da alcuni registri nella CPU.
+
+Il Sistema Operativo puo' essere inteso come un'estensione della macchina, un gestore delle risorse.
+
+\subsection{Concetto di chiamata}
+Quando chiamo \texttt{read} il sistema operativo mette in pausa il processo chiamante,
+salva lo stato dei registri, e esegue la sua routine. Quando il sistema operativo ha finito
+ripristina lo stato dell'esecuzione nel processore e tutto torna come prima.
+Questo \textbf{cambio di contesto} richiede molte risorse.
+
+Il codice infatti puo' essere eseguito in due modalita:
+\begin{itemize}
+    \item kernel mode: non ho nessun tipo di restrizione.
+    \item user mode: non posso fare quello che voglio.
+\end{itemize}
+
+L'esecuzione di una chiamata di sistema e' composto da:
+\begin{itemize}
+    \item Programma utente chiama sys call
+    \item Il controllo dell'esecuzione passa al sistema operativo
+    \item salva lo stato del programma utente ed esegui la procedura
+    \item ripristina lo stato del processore ed esegui il processo chiamante.
+\end{itemize}
+
+\subsection{Storia}
+All'inizio vi erano i computer a \textbf{valvole termoioniche}. Non c'era un 
+sistema operativo, la programmazione avveniva tramite linguaggio macchina, ed erano molto lenti. \\
+
+Con i \textbf{transistor} nascono i primi sistemi che eseguono batch e job.
+Un batch e' un programma che \emph{non richiede l'interazione con l'utente}, puo' essere
+eseguito in \textbf{background}.
+Nasce il concetto di parallelizzazione del carico di lavoro: una macchina legge (e scrive il codice su nastro magnetico) il programma,
+una esegue i calcoli, e un'altra stampa (l'output su nastro magnetico).
+Le prime macchine a transistor erano generalmente dei \textbf{mainframe}.
+C'e' anche il concetto di divisione delle aree di memoria, un programma batch e' costituito da:
+\begin{itemize}
+    \item \texttt{JOB}: tempo massimo di esecuzione
+    \item \texttt{FORTRAN}: compilatore
+    \item il \texttt{Programma} vero e proprio
+    \item \texttt{LOAD}
+    \item \texttt{RUN}: regole di esecuzione, parametri
+    \item \texttt{END}
+\end{itemize}
+
+Con i \textbf{circuiti integrati} nascono i primi sistemi operativi, con
+l'obiettivo di rendere il codice portabile tra diversi sistemi.
+Nasce anche il concetto di famiglia di computer.
+I computer sono in grado di tenere in memoria piu' job, con \textbf{multics} 
+
+Il primo sistema \textbf{time sharing} e' \texttt{multics}. Invece \texttt{unix} 
+era una versione monoutente di \texttt{multics}. \texttt{minix} nasce come variante di
+\texttt{multics}, e' il sistema modulare di Tanenbaum che nasce come progetto didattico.
+Successivamente nasce \texttt{linux} come variante di \texttt{minix}.
+
+Dato che molte persone hanno preso \texttt{unix} per modificarlo, nasce la necessita' 
+di introdurre uno standard, ossia POSIX, per rendere il codice portabile tra piu sistemi operativi.
+
+\subsection{Processore}
+Generalmente il processore e' composto da i registri:
+\begin{itemize}
+    \item \texttt{PSW}: contiene informazioni sullo stato del processore.
+    \item \texttt{SP}: puntatore allo Stack, area di memoria che solitamente contiene indirizzi delle procedure, 
+    parametri delle procedure e variabili locali.
+    \item \texttt{PC}: indirizzo dell'istruzione in esecuzione
+\end{itemize}
+
+La CPU e' molto complessa, contiene infatti: una pipeline con un buffer che raccoglie l'output delle operazioni,
+spesso ci sono piu' core, e ci sono le cache L1, L2 e L3. 
+
+I thread della CPU permettono di tenere salvato lo stato di esecuzioni di processo e 
+di scambiare nell'ordine di 1 nanosecondo il programma in esecuzione sul core.
+
+Il sistema operativo deve gestire queste componenti per permettere il \textbf{multiplexing} delle risorse.
+
+\subsection{IO}
+Un dispositivo di input output e' composto dal controller e dal dispositivo vero e proprio.
+Il sistema operativo si interfaccia con il controller per governarlo, e viene fatto
+attraverso le operazioni di tipo \texttt{in/out} (richiedono che il processo rimanga in attesa), o 
+attraverso gli interrupt o piu banalmente attraverso lo scambio di messaggi, e in fine attrverso il DMA.
+
+Tutte queste operazioni sono disponibili solo in kernel mode, avviene un cambio di contesto ogni volta 
+che bisogna usare un dispositivo IO.
+
+La CPU e' in grado di disabilitare gli interrupt: se sto gestendo un'interrupt non posso riceverne un'altro!
+
+Il software che permette di manovrare il controller e' il \textbf{driver}, questo fornisce
+le mappature e le procedure da usare per manovrarlo. Quando sono installate le procedure devono essere
+linkate al kernel.
+
+\subsection{BUS}
+un computer e' composto da diversi tipi di bus, ognuno con velocita di trasferimento diverse:
+DDR4 e DDR5 sono dei bus separati che collegano esclusivamente CPU e RAM, mentre PCIe e'
+un bus che viene utilizzato per collegare diverse periferiche: schede video, schede di rete, controller 
+di vario tipo, ed e' il sostituto del vecchio ISA.
+
+Il bus USB nasce invece come metodo universale per collegare periferiche al volo al computer,
+ed era fatto principalmente per dispositivi lenti, anche se oggi le perifieriche usb riescono 
+a trasmettere 5GB/s.
+
+\subsection{BOOT}
+Una memoria sulla scheda madre contiene il \textbf{firmware}, ossia il 
+\textbf{BIOS}, un programma che esegue delle routine di controllo all'avvio: controlla le periferiche
+installate, le inizializza, imposta i servizi base per IO, e cerca nel CMOS il percorso impostato
+dove si trova il boot loader. Quest'ultimo viene avviato e a sua volta avvia il sistema operativo.
+
+\subsection{Diversi tipi di OS}
+I \textbf{sistemi Mainframe} si occupano di gestire l'esecuzione di 
+processi che non richiedono l'interazione con l'utente, si occupano di
+elaborare grandi quantita di transazioni.
+
+Spesso sono sistemi \textbf{time sharing}: piu' utenti possono connettersi e richiedere
+l'esecuzione di un job. \\
+
+I \textbf{server} sono ottimizzati per gestire richieste che viaggiano 
+sul web. Sono installati su macchine simili a personal computer, o anche su dei mainframe. \\
+
+i sistemi \textbf{Real Time} sono sistemi in cui e' importante rispettare 
+le scadenze di esecuzione. Possono essere Soft o Hard.
+
+In tutti i casi il sistema operativo protegge la macchina da se stessa: evita un'uso 
+scorretto e dannoso, evita che un'utente invada lo spazio di un'altro utente.
+
+\subsection{Processo}
+Ogni processo ha:
+\begin{itemize}
+    \item spazio degli indirizzi
+    \item risorse assegnate: file aperti, dispositivi in uso, allarmi
+\end{itemize}
+
+Lo spazio degli indirizzi e' costituito da: 
+\textbf{stack} che contiene indirizzi di procedure e chiamate, \textbf{data} contiene le variabili, 
+\textbf{text} contiene il testo del programma.
+
+Un processo puo' creare altri processi, in unix avviene tramite la duplicazione,
+e alcuni sistemi operativi mantengono una struttura ad albero che descrive la parentela dei processi.
+La comunicazione tra piu' processi e' possibile attraverso le \textbf{pipe} e alla \textbf{Interprocess comunication}
+
+I processi sono di proprieta' di utenti, che a sua volta appartengono a gruppi.
+
+Le informazioni dei processi si trovano nella \textbf{tabella dei processi}.
+
+\subsection{File}
+Un file e' l'astrazione del disco fisico. Viene letto fornendo al driver 
+i byte da leggere. 
+In unix un file non e' necessariamente una sequenza di byte in un disco fisico,
+ma puo' rappresentare dispositivi di i/o, o per esempio informazioni di vario genere
+sul sistema operativo. \\
+
+Il \textbf{file descriptor} e' un intero che identifica un file aperto, questo 
+viene richiesto attraverso il nome del file e viene fornito dal sistema operativo se 
+ho i diritti di accesso. \\
+
+La \textbf{pipe} e' uno pseudo file che viene usato per collegare piu' processi
+insieme, in modo da permettere lo scambio di dati.
+
+\subsubsection{diritti di accesso}
+ogni file e' protetto con 3 bit: \texttt{r}, \texttt{w},\texttt{x}.
+Ci sono generalemte 3 triplette di questi bit: i primi 3 riguardano i permessi del proprietario,
+i secondi 3 per quanto riguarda il gruppo di appartenza del proprietario e gli ultimi per gli altri utenti.
+
+\subsection{Struttura di un sistema operativo}
+In un computer il \textbf{programma principale} invoca le chiamate di sistema mentre
+il \textbf{kernel}: di solito un blocco monolitico, le esegue.
+
+Il contentuto del kernel monolitico si trova in un'unica cartella, la maggior parte dei sistemi
+sono monolitici perche':
+\begin{itemize}
+    \item Ho un'unico programa strutturato invece di avere piu' servizi che dialogano tra loro.
+    \item Implementare i servizi richiede complessita e peggiora l'efficienza
+    \item E' piu' complesso compilarlo: le procedure dei moduli devono essere collegate.
+    \item Un modulo potrebbe chiamare moduli che non dovrebbe chiamare, bisogna implementare questo aspetto della sicurezza.
+    \item Cambiare processo vuol dire spesso cambiare modulo
+\end{itemize}
+
+Un kernel monolitoco spesso ha dei moduli al suo interno, ma spesso, uno dipende dall'altro
+quindi non posso cambiare moduli al volo, spesso devo cambiare la tabella delle procedure disponibili
+quando installo un driver.
+
+In unix ci sono le librerie condivise: \texttt{shared libs}, una collezione di procedure visibili a tutti.
+
+Un sistema monolitoco e' ben strutturato, infatti: il programma utente 
+e' in grado di chiamare le librerie utente, le librerie utente attivano le chiamate di sistema, 
+che a loro volta si interfacciano col kernel. \\
+
+La struttura a \textbf{microkernel} prevede la suddivisione del sistema operativo 
+in tanti kernel eseguiti su processi diversi. Il vantaggio di questa struttura e' che un'errore
+su un microkernel non sfonda tutto il sistema, al limite basta riavviare un singolo processo. \\
+
+Il modello \textbf{client/server } prevede uno o piu sistemi client che fanno richieste ad un server. \\
+
+\subsection{Macchine Virtuali}
+Le macchine virtuali possono essere eseguite solo su CPU virtualizzabili, ossia che 
+riescano ad ingannare il software facendogli credere di star eseguendo in modalita privilegiata,
+quando in verita' e' solo una macchina virtuale. \\
+
+La virtualizzazione di \textbf{tipo 1} permette l'esecuzione del sistema operativo sull'hardware.
+La virtualizzazione di \textbf{tipo 2} usa un \textbf{Machine Simulator} per far dialogare
+kernel e il sistema operativo host. Tutte le risorse vengono richieste al sistema host, il che non e' efficiente,
+infatti alcune istruzioni bypassano la struttura.
+
+\subsection{Container}
+Il container e' un tipo di virtualizzazione \textbf{leggera}, virtualizzo il sistema operativo usando il kernel 
+dell'host. Quindi ci deve essere una compatibilita tra host e container.
+Il Container e' logicamente separato dal sistema operativo, i programmi dentro al container non sanno di essere li dentro.
+
+\subsection{Exokernel}
+Divido a priori le risorse hardware tra le macchine virtuali da eseguire.
+
+\subsection{Unikernel}
+Sistemi operativi minimali, non sono general purpose ma 
+mettono a disposizione poche librerie per eseguire poche applicazioni,
+se tolgo funzionalita al sistema, ho meno vulnerabilita'.

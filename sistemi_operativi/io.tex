@@ -1,0 +1,148 @@
+Ci sono due prospettive quando si parla di IO:
+\begin{itemize}
+    \item \textbf{Ingegneri Elettronici}:
+    \item  \textbf{Programmatori}
+\end{itemize}
+
+Ci sono due categorie di dispositivi IO:
+\begin{itemize}
+    \item \textbf{Dispositivi a Blocchi}: riguardano il trasferimento di dati in sequenze di lughezza fissa.
+    \item \textbf{Dispositivi a Caratteri}: riguardano il trasferimento su una stream di dati, i dati non arrivano in modo strutturato.
+    \item \textbf{Ibridi}
+\end{itemize}
+
+I dispositivi a blocchi sono gestiti dal file system.  \\
+Bisogna tenere presente che il sistema operativo deve essere in grado di gestire
+contemporaneamente dispositivi che hanno velocita di lettura/scrittura differenti tra loro:
+una tastiera scrive di solito $10byte/s$, un mouse $100byte/s$, USB 3.0 arriva a $650MB/s$ mentre 
+PICIe 6.0 a $128GB/s$.
+
+C'e' una differenza importante tra una tastiera e una perificarica PCIe, infatti sulla scheda madre
+queste periferiche sono gestite da due chip differenti:
+\begin{itemize}
+    \item \textbf{Northbridge}: collega la CPU ai bus piu' veloci, come DDR per la RAM e PCIe.
+    \item \textbf{Southbridge}: collega la CPU ai bus piu' lenti, come USB, Bluetooth, Ethernet.
+\end{itemize}
+
+Il \textbf {Controller del dispositivo} si puo' trovare sulla scheda madre o sul dispositivo stesso.
+A seconda del dispositivo, questo utilizza una standard che puo' essere: ANSI, IEEE, ISO oppure 
+uno \textbf{standard de facto} come SATA, SCSI, USB e ThunderBolt. Quelle de facto sono interfacce create
+da aziende e che avendo avuto successo, sono richieste sul mercato. \\
+
+Nei dispositivi a blocchi, il controller non fa altro che leggere uno stream di dati dal dispositivo 
+per poi strutturarlo in un blocco. Il buffer dei dati letti dal dispositivo viene 
+messo in un \textbf{buffer} del controller che tipicamente e' una vera e propria RAM.
+
+\paragraph{Hard Disk}
+E' composto da:
+\begin{itemize}
+    \item MCU.
+    \item Memoria Cache di tipo DDR SDRAM, da usare come buffer.
+    \item VCM: gestisce la rotazione del disco e consuma corrente.
+    \item Chip Flash: il software che gestisce l'hard disk.
+    \item Accelerometro: in caso di urti la testina si blocca. 
+\end{itemize}
+
+\subsection{Port-Mapped IO}
+Lo spazio degli indirizzi del controller e' completamente estraneo allo spazio virtuale
+del computer. Si usano istruzioni \texttt{IN} e \texttt{OUT} per indirizzare i registri
+del controller e impartire quindi dei comandi.
+
+\subsection{Memory-Mapped IO}
+Gli indirizzi di memoria dei registri sono mappati alla memoria virtuale.
+
+Questo metodo e' efficiente per i compilatori:
+il Port-Mapped IO prevede che il programmatore specifichi che l'indirizzo fornito sia esclusivamente per IO, 
+mentre con Memory-Mapped cio' non succede, l'indirizzo fornito non puo' appartentere ad altri spazi virtuali. \\ 
+
+Se si usa il \textbf{paging} per mappare l'IO in memoria ci sono altri vantaggi: 
+con la tabella delle pagine posso regolare l'accesso al dispositivo, e posso facilmente
+effettuare un link dei driver necessari per utilizzare il dispositivo.
+
+Il problema principale di questo approccio e' il caching e il direttamente delle 
+informazioni: la cache deve essere disabilitata per gli indirizzi IO, e in oltre 
+bisogna capire quando un'indirizzo e' IO o non, ho due possibilita:
+\begin{itemize}
+    \item scrivo prima in memoria, se fallisco provo l'IO. Meh
+    \item un dispositivo (\textbf{snooper}), intercetta l'indirizzo
+\end{itemize}
+
+Ci sarebbe anche un'ibrido tra i due: PMIO viene usato per configurare il dispositivo, e il MMIO viene usato per leggere e scrivere.
+
+\subsection{DMA}
+La cpu potrebbe richiedere i dati dal controller byte per byte, ma cosi spreca troppe istruzioni.
+Il controller DMA ci aiuta: ha accesso al bus di sistema indipendentemente dalla CPU. Il controller DMA deve essere impostato dalla CPU, cosi
+ha i parametri inizializzati per capire dove scrivere, poi quando viene richiesta una lettura, il DMA preleva le parole dal
+controller e le mette in RAM. A fine lettura, il DMA manda un interrupt alla CPU.
+
+Il DMA ha due modi per scrivere in RAM:
+\begin{itemize}
+    \item Cycle Stealing: quando il controller DMA preleva una parola, ottiene priorita sul bus e sfancula la CPU.
+    \item Burst: quando il controller DMA deve scrivere dei blocchi, richiede il bus, fa tutte le scritture, e lo rilascia.
+    \item Fly-by mode: il DMA dice al controller di scrivere direttamente in memoria, senza intermediari.
+\end{itemize}
+
+Con l'introduzione del DMA e' ancora necessario il buffer interno del controller? Si, perche'
+prima di trasferire i dati verso il DMA, devo assicurarmi che la velocita' di trasferimento sia costante.
+Nel caso di un hard disk, dove la testina ha bisogno di muoversi, la velocita di lettura non e' detto che sia costante.
+
+\subsection{Interrupt}
+Ci sono 3 tipi di interrupt in un computer:
+\begin{itemize}
+    \item \textbf{trap}: che corrispondono alle chiamate di sistema
+    \item \textbf{fault e eccezioni}: corrispondono alla gestione di errori
+    \item \textbf{interrupt hardware}: sono quelli che vengono utilizzati principalmente dai dispositivi di IO.
+\end{itemize}
+
+Il \textbf{Vettore degli interrupt} tiene in memoria gli indirizzi delle procedure da eseguire per ogni 
+interrupt.
+Ma dove metto le informazioni relative all'esecuzione del programma interrotto? Posso usare
+i registri hardware oppure lo \textbf{stack}, che puo' essere \textbf{utente} o del \textbf{kernel}.
+Il stack kernel e' quello piu' sicuro da usare, probabilmente il puntatore allo stack del kernel 
+non e' errato e c'e' spazio per inserire i dati, ma bisogna generare una trap per cambiare contesto. 
+In oltre cambiare contesto implica che la TLB sia invalidata. // 
+Altrimenti nello spazio utente, ma ci sono piu' probabilita' che il puntatore allo stack sia errato, o che 
+la pagina sia quasi completa. 
+
+Bisogna anche tenere conto di come gestire gli interrupt: \textbf{precisi} o \textbf{imprecisi}?
+Gli interrupt \textbf{precisi} garantiscono che le istruzioni vengano completate prima di gestire l'interrupt.
+Gli interrupt \textbf{imprecisi} invece bloccano immediatamente l'esecuzione dell'istruzione nella pipeline, e ne
+salvano lo stato per poi riprendere l'esecuzione dell'istruzione da dove era stata interrotta. 
+
+\section {Principi del software di io}
+
+Il software per l'io opera secondo i seguenti principi:
+\begin{itemize}
+    \item Il software dovrebbe essere indipendente dal dispositivo.
+    \item \texttt{everything is a file}: con la chiamata \texttt{write} posso leggere
+    i dispositivi io.
+    \item gestione degli errori fisici di trasmissione
+    \item trasferimenti sincroni e asincroni.
+    \item \texttt{buffer}: e' fondamentale, i dati possono non arrivare in ordine e bisogna ricostruire la sequenza originale.
+    Aiuta a prevenire la latenza in oltre.
+    \item I dispositivi sono condivisi tra piu' utenti.
+\end{itemize}
+
+\subsection{Io Programmato}
+L'io programmato prevede che l'utente comandi i dispositivi, mentre il sistema 
+operativo offre l'interfaccia.
+
+Quando l'utente vuole stampare una stringa, questa si trova in un buffer nello spazio utente.
+La chiamata di sistema per la stampa trasferisce la stringa nello spazio del kernel.
+La cpu si trova nello stato di \textbf{busy waiting}, copia i dati carattere per carattere 
+nella stampante e deve aspettare ad ogni iterazione che la stampante sia pronta per accettare un carattere.
+
+\subsection{Io guidato da interrupt}
+Quando la stampante ha finito di stampare il carattere inviato, viene generato un interrupt.
+Il sistema operativo cattura l'interrupt e copia il carattere successivo nella stampante, e chiama lo scheduler.
+Quando ho finito di copiare i caratteri, il gestore degli interrupt viene disabilitato, e il controllo viene passato 
+al processo utente.
+
+\subsection{Io con DMA}
+Il problema del metodo guidato da interrupt e' che oltre a cambiare utente, bisogna passare allo spazio
+del kernel per ogni singolo carattere.
+Piuttosto conviene sfruttare il controller DMA, copio i dati al suo interno e una volta che 
+il trasferimento e' completato la stampante invia un interrupt.
+
+I controller DMA possono essere complessi da gestire, spesso hanno piu' canali per gestire piu' 
+scritture insieme.
