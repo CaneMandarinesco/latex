@@ -1,0 +1,136 @@
+\section*{Esercizio 1}
+
+\subsection{Idea}
+Per risolvere il problema si fa una visita BFS, sul grafo $G$ delle configurazioni, a partire dalla configurazione iniziale.
+Due nodi $v,u$ sono collegati nel grafo, se e solo se e' possibile passare da una configurazione all'altra in una mossa.
+Ogni nodo del grafo $G$ puo' essere rappresentato come una lista di valori: [Coppia p1, Coppia p2],
+ossia le posizioni che occupa la pedina (dove $p1=p2$ se questa e' in piedi). 
+La visita BFS produce l'albero $T$, che e' radicato nella configurazione iniziale.
+
+Conoscendo $p1,p2$ e $M$ posso scoprire tutte le mosse possibili a partire dalla posizione $[p1,p2]$.
+La procedura \emph{muoviPedina(\textbf{Nodo} v, \textbf{Mossa} m) $\to$ \textbf{Nodo}} dato in input la posizione della pedina
+per ognuna delle 4 mosse possibili: $\{up,down,left,right\}$, ritorna la posizione della pedina dopo aver effettuato 
+quella la mossa. \\
+
+L'algoritmo termina quando la vista BFS trova la configurazione finale.\\
+
+Per costruire la sequenza di mosse posso risalire l'albero $T$ a partire dalla configurazione finale. Il metodo
+$convertiInMossa$(\textbf{Nodo} from, \textbf{Nodo} to) $\to$ \textbf{Mossa} $\in \{u,d,l,r\}$ ritorna il nome 
+della mossa che mi porta da $from$ a $to$.
+Ogni nodo della \emph{ListaCollegata L} ha due puntatori: al nodo precedente e al nodo successore, quindi posso
+leggere la lista di mosse in due modi versi: dalla prima all'ultima e dall'ultima alla prima.
+Il metodo $L.insertPrec$(\textbf{Nodo} v) imposta il puntatore al precedente dell'ultimo nodo aggiunto in $L$,
+alla prossima chiamta di $insertPrec$ il riferimento al nodo precedente sara' impostato sul nodo di $v$.
+
+
+\subsection{Codice}
+\begin{algorithm}[H]
+\SetAlgoLined
+\KwIn{Coppia $c_1 = (i,j)$, Coppia $c_2 = (s,t)$, Matrice $M$}
+\KwOut{Sequenza di mosse ottimale per risolvere il livello, o $False$ se cio' non e' possibile}
+
+Coda F \;
+Matrice $M'$ di grandezza $n \times n$\;
+Albero T \;
+
+\textbf{Nodo} u = $[c_1, c_1]$ \tcp { Configurazione iniziale }
+$dist(u) = 0$ \;
+\textbf{Nodo} h = \textbf{null} \tcp { Configurazione finale }
+
+\tcp {Marca u e mettilo nell'albero}
+F.enqueue(u) \;
+M[$c_1$].insert($c_1$) \;   
+Rendi il nodo $u$ radice in $T$ \;
+
+risolto $\gets$ \textbf{false} \;
+\While{\textbf{not} $F.empty()$}{
+    \textbf{Nodo} $v \gets F.dequeue()$ \;
+    \ForEach{mossa $\in \{u,d,l,r\}$}{
+        \tcp {Ottieni la nuova posizione dopo aver effettuato la mossa}
+        Coppie $p1, p2 \gets muoviPedina(v, mossa)$ \;
+        \uIf{$p1$ e $p2$ sono dentro la mappa e $M[p1], M[p2] \neq -1$}{
+
+            \tcp{Controlla se la mossa e' marcata}
+            \uIf {$p2 \notin M'[p1]$}{
+                \textbf{Nodo} $k = [p1, p2]$ \;
+                $dist(k) = dist(v)+1$ \;
+                F.enqueue($k$) \;
+                Rendi $v$ padre del nodo $k$ in $T$ \;
+                \tcp{Marca la posizione}
+                M[p1].insert(p2) \;
+            } 
+
+            \tcp{Controlla se sono in piedi sulla casella finale}
+            \uIf {$p1$ == $p2$ == $ c_2$}{
+                risolto $\gets$ \textbf{true} \;
+                h = k \;
+                \textbf{break} \;
+            }
+        }
+    }
+}
+
+\uIf {\textbf{not risolto}} {
+    \Return risolto \;
+}
+
+\tcp{risali l'albero per ottenere la sequenza di mosse da ritornare}
+ListaCollegata L \;
+\While {$h \neq u$ } {
+    \textbf{Nodo} $h' \gets padre(h)$ \;
+    \textbf{Mossa} m = convertiInMossa(h',h) \;
+    L.insertPrec($m$) \;
+    $h=h'$
+}
+
+\Return L \;
+
+
+\caption{Bloxorz Solver}
+\end{algorithm}
+
+\subsection{Correttezza}
+L'algoritmo si basa su due proprieta' della vista BFS.
+
+\paragraph{Prop. 1}
+Nella visita BFS si ha che $l(v) = d_{sv}$: ossia la profondita (o livello) in cui si trova $v$ 
+nell'albero generato da BFS e' uguale al cammino minimo che porta dalla radice a $v$ nel grafo. \\
+
+\paragraph{Prop. 2}
+Se durante la vista BFS la coda contiene i vertici: $\{v_1, \dots, v_p\}$, allora $l(v_i) \leq l(v_{i+1})$
+per $1 \leq i \leq p-1$. \\
+
+Per cui, nel momento in cui trovo la mossa che mi porta alla configurazione finale $h$, questo nodo ha $l(h) = d_{sh} = l_h$.
+Ora caso mai trovassi un'altra sequenza di mosse che mi porta ad $h$, con lunghezza $l_h'$, sono sicuro che $l_h' \geq l_h$,e 
+che quindi $d_{sh}' \geq d_{sh}$.
+
+\subsection{Complessita'}
+Per semplicita' di analisi anlizziamo il grafo $G'$ costruito sulla matrice M di grandezza $n \times n$, dove ogni casella e' praticabile, e ognuna di queste 
+ha $4$ posizioni possibili, e per ogni posizione (ossia nodo un nodo) ci sono 4 archi verso altri 4 nodi (un'arco per 
+mossa). \\
+
+Quindi nel grafo ci sono $O(4 \cdot n^2)$ nodi e $O(4 \cdot 4 \cdot n^2)$ archi. L'algoritmo al caso peggiore
+scopre tutti i nodi del grafo, e per farlo pratica tutti gli archi che portano a configurazioni valide, quindi
+l'algoritmo esegue in tempo $O(n^2)$
+
+La complessita' spaziale e' anch'essa $O(n^2)$, l'algoritmo prevede l'uso della matrice $M'$ di grandezza $n \times n \times 5$.
+La matrice contiene liste collegate che al loro interno hanno al massimo 5 elementi (uno per posizione possibile su quella casella).
+
+Invece la lista collegata, riprendendo quanto detto prima, ha al massimo $O(n^2)$ mosse in $G'$ che risolvono il problema. 
+
+
+%%% NON TOCCARE QUESTA PARTE
+\newpage
+\begin{tcolorbox}[
+    colback=white,           % sfondo
+    colframe=black,          % colore bordo
+    coltitle=black,          % colore del testo
+    colbacktitle=gray!50,    % sfondo titolo
+    boxrule=1pt,             % spessore del bordo
+    title=\textbf{Commenti Esercizio}
+    ]
+    
+\vspace{45\baselineskip}
+
+\end{tcolorbox}
+\newpage
