@@ -120,7 +120,7 @@ alle pagine della memoria fisica. \\
         , se R=0 e $Eta>\tau$ allora la pagina non e' nel working set e posso rimuoverla altrimenti, la contrassegno come vecchia per possibile rimozione.
         Se nessuna paggina e' rimuovibile allora seleziono la piu vecchia con R=0. 
 
-        Questo algoritmo puo' essere migliorato usando una struttura a cerchio: \textbf{WS Clock}, ad ogni tick controllo se la pagina da schedulare e' puilita
-        se non lo e' sborro. Devo controllare anche se \textit{la pagina e' stata modificata}:
-        se lo e', devo schedulare la sua scrittura su disco, ma a lungo andare potrei aver schedulato moooolte scritture, quindi imposto un limite di scritture da schedulare.
+        Questo algoritmo puo' essere migliorato usando una struttura a cerchio: \textbf{WS Clock}, ad ogni tick controllo se la pagina 
+        ha bit R=1 allora lo imposto a 0 e vado alla prossima, altrimenti se R=0 controllo l'eta e in caso la sfratto. Devo controllare anche se \textit{la pagina e' stata modificata}:
+        se lo e' e ha bit R=0, allora devo schedulare la sua scrittura su disco, ma a lungo andare potrei aver schedulato moooolte scritture, quindi imposto un limite di scritture da schedulare.
         Continuo al ciclare sulla struttura finche' una delle pagine che ho schedulato non e' stata scritta sul disco.
