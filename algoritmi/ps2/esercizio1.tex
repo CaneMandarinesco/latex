@@ -22,7 +22,6 @@ leggere la lista di mosse in due modi versi: dalla prima all'ultima e dall'ultim
 Il metodo $L.insertPrec$(\textbf{Nodo} v) imposta il puntatore al precedente dell'ultimo nodo aggiunto in $L$,
 alla prossima chiamta di $insertPrec$ il riferimento al nodo precedente sara' impostato sul nodo di $v$.
 
-
 \subsection{Codice}
 \begin{algorithm}[H]
 \SetAlgoLined
@@ -32,7 +31,6 @@ alla prossima chiamta di $insertPrec$ il riferimento al nodo precedente sara' im
 Coda F \;
 Matrice $M'$ di grandezza $n \times n$\;
 Albero T \;
-
 \textbf{Nodo} u = $[c_1, c_1]$ \tcp { Configurazione iniziale }
 $dist(u) = 0$ \;
 \textbf{Nodo} h = \textbf{null} \tcp { Configurazione finale }
@@ -117,7 +115,6 @@ La complessita' spaziale e' anch'essa $O(n^2)$, l'algoritmo prevede l'uso della 
 La matrice contiene liste collegate che al loro interno hanno al massimo 5 elementi (uno per posizione possibile su quella casella).
 
 Invece la lista collegata, riprendendo quanto detto prima, ha al massimo $O(n^2)$ mosse in $G'$ che risolvono il problema. 
-
 
 %%% NON TOCCARE QUESTA PARTE
 \newpage
