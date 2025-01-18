@@ -3,27 +3,93 @@
 \subsection{Idea}
 
 \subsection{Codice}
-\subsection{Codice}
 \begin{algorithm}[H]
 \SetAlgoLined
 \KwIn{Coppia $c_1 = (i,j)$, Coppia $c_2 = (s,t)$, Matrice $M$}
 \KwOut{Sequenza di mosse ottimale per risolvere il livello, o $False$ se cio' non e' possibile}
 
+
+\textbf{bool} $risolto \gets$ \textbf{false} \;
+Nodo h $\gets$ \textbf{null} \;
+Intero $d_{min} \gets 0$
 \SetKwProg{Fn}{Function}{}{end}
 
-\Fn { vistaBST(Coppia $c_1$, Coppia $c_2$, M mat)} {
-    
+\Fn { vistaBFS(Coppia $c_1$, Lista $evita$)} {
+    LinkedList $L_r$ \;
+    LinkedList $L_b$ \;
+    Matrice $M'$ di grandezza $n \times n$ \;
+    Albero $T$ \;
+
+    Nodo $u \gets [c_1, c_1]$ \;
+    $F.eneque(u)$ \;
+    $M[c_1].insert(c_1)$ \;
+    Rendi il nodo $u$ radice in $T$ \;
+    \While { \textbf{not} F.empty() } {
+        Nodo $v \gets F.dequeue()$ \;
+        \ForEach {$mossa \in \{u,d,l,r \}$} {
+            Coppia $p1,p2 \gets muoviPedina(v, mossa)$ \;
+            \uIf {$p1$ e $p2$ non sono dentro la mappa} {
+                \textbf{continue} \;
+            }
+            \uIf {$M[p1], M[p2] \in evita \cup \{-1\}$ } {
+                \textbf{continue} \;
+            }
+            \uIf {$p2 \in M'[p1]$} {
+                \textbf{continue} \;
+            }
+
+            Nodo $k \gets [p1, p2]$ \;
+            \uIf {$M[p1] == r$} {
+                $L_r.insert(k)$ \;
+            }
+            \uIf {$M[p2] == b$} {
+                $L_b.insert(k)$ \;
+            }
+
+            $dist(k) \gets dist(v) + 1$ \;
+            $F.enqueue(k)$\;
+            Rendi $v$ padre del nodo $k$ in $T$ \;
+            $M[p1].insert(p2)$ \;
+
+            \uIf {$p1 == p2 == c_2$ e $d_{min}$} {
+                h = k \;
+                $d_{min} \gets dist(h)$
+            }
+        } 
+    }
+
+    \Return {$L_r,L_b$} \;
 }
 
-LinkedList confBtnRosso \;
-LinkedList confbtnBlu \;
+\caption{Bloxorz 2 Solver - procedura $vistaBFS$}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\SetAlgoLined
+\KwIn{Coppia $c_1 = (i,j)$, Coppia $c_2 = (s,t)$, Matrice $M$}
+\KwOut{Sequenza di mosse ottimale per risolvere il livello, o $False$ se cio' non e' possibile}
+    
+
+LinkedList $L_r, L_b \gets visitaBFS(c_1, [R,B])$ \;
+LinkedList $L_r', L_b' \gets visitaBFS(c_2, [])$ \;
+
+\tcp {-- prova a risolvere premendo solo un pulsante rosso --}
+... \;
+\tcp {-- prova a risolvere premendo solo un pulsante blu --}
+... \;
+
+\tcp {-- prova a risolvere premendo un pulsante blu e poi uno rosso --}
+\tcp {prendi la configurazione che tocca il  pulsante rosso piu' vicina $c_2$}
+$v_r \gets v \in L_r'$ tale che $d_{v,c_2} \leq d_{v',c_2} \forall v' \in L_r'$ \;
+LinkedList $N_r, N_b \gets vistaBFS(v_r, [R])$ \;
+$b_r \gets v \in N_b $ tale che $d_{v,v_r} \leq d_{v',v_r} \forall v' \in N_b$ \;
+
+\tcp {-- prova a risolvere premendo un pulsante rosso e poi uno blu -- }
 
 \Return L \;
 
-
 \caption{Bloxorz 2 Solver}
 \end{algorithm}
-
 
 \subsection{Correttezza}
 
